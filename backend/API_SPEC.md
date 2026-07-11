@@ -88,6 +88,7 @@ CSV Import/Export
 Authentication & Users
 - `users` are managed locally. API endpoints that create or modify resources should accept `created_by` or `author_id` numeric user ids.
 - `users.password_hash` (added in migration 002) stores a bcrypt hash. Plaintext passwords are never stored or returned.
+- `users` columns as of migration 018: `id`, `name` (required), `email` (required), `created_at`, `position_name` (nullable, not yet used by any feature — reserved for future use), `password_hash`, `is_active`, `role_id`. Migration 018 fixed a drift where `001_create_schema_up.sql` still described a `username`/`full_name`/nullable-`email` shape that the running app never actually used (it always read/wrote a single `name` column) — also dropped two dead, unused columns (`position_id`, and `user_status`, which duplicated `is_active`).
 
 - POST /auth/register
   - Body: { name, email, password } (password min 8 chars)
