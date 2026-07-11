@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Pro — Sign in</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --bp-navy: #0b2f5c;
+      --bp-navy-dark: #071f40;
+      --bp-navy-tint: rgba(11, 47, 92, 0.06);
+      --bp-ink: #0f172a;
+      --bp-muted: #64748b;
+      --bp-border: #e2e8f0;
+      --bp-bg: #f4f6f8;
+      --bp-surface: #ffffff;
+      --bp-danger: #b42318;
+      --bp-success: #067647;
+      --radius-sm: 8px;
+      --radius-lg: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bp-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--bp-surface);
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: grid;
+      gap: 18px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .login-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .login-brand-text {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #lang-toggle {
+      background: none;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--bp-navy);
+      cursor: pointer;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--bp-navy);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .login-brand span {
+      font-size: 0.72rem;
+      color: var(--bp-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+      display: block;
+    }
+
+    .login-card h1 {
+      margin: 2px 0 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--bp-ink);
+    }
+
+    .login-card p.subtitle {
+      margin: 0;
+      color: var(--bp-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .field-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-row label {
+      font-size: 0.85rem;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .field-row input {
+      width: 100%;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .field-row input:focus {
+      outline: 3px solid var(--bp-navy-tint);
+      border-color: var(--bp-navy);
+    }
+
+    .button {
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 11px 18px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      background: var(--bp-navy);
+      color: white;
+      transition: background 0.15s ease;
+    }
+
+    .button:hover:not(:disabled) {
+      background: var(--bp-navy-dark);
+    }
+
+    .button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .toggle-row {
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--bp-muted);
+    }
+
+    .toggle-row button {
+      background: none;
+      border: none;
+      color: var(--bp-navy);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      padding: 0;
+    }
+
+    .error-message {
+      color: var(--bp-danger);
+      font-size: 0.85rem;
+      margin: 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <form class="login-card" id="auth-form">
+    <div class="login-brand">
+      <div class="login-brand-text">
+        <div class="brand-mark">BP</div>
+        <span>Business Pro</span>
+      </div>
+      <button type="button" id="lang-toggle">العربية</button>
+    </div>
+
+    <div>
+      <h1 id="form-title">Sign in</h1>
+      <p class="subtitle" id="form-subtitle">Sign in to manage your clients.</p>
+    </div>
+
+    <p class="error-message" id="error-message"></p>
+
+    <div class="field-row" id="name-row" style="display:none;">
+      <label for="name-input" data-i18n="auth.nameLabel">Name</label>
+      <input id="name-input" type="text" placeholder="Your name" data-i18n-placeholder="auth.namePlaceholder" autocomplete="name">
+    </div>
+
+    <div class="field-row">
+      <label for="email-input" data-i18n="auth.emailLabel">Email</label>
+      <input id="email-input" type="email" placeholder="you@example.com" autocomplete="email" dir="ltr" required>
+    </div>
+
+    <div class="field-row">
+      <label for="password-input" data-i18n="auth.passwordLabel">Password</label>
+      <input id="password-input" type="password" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password" required>
+    </div>
+
+    <button class="button" type="submit" id="submit-button">Sign in</button>
+
+    <div class="toggle-row">
+      <span id="toggle-text">Need an account?</span>
+      <button type="button" id="toggle-button">Create one</button>
+    </div>
+  </form>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:3001';
+
+    let currentLanguage = localStorage.getItem('appLanguage') || 'en';
+    const translations = {
+      en: {
+        'auth.signInTitle': 'Sign in',
+        'auth.signInSubtitle': 'Sign in to manage your clients.',
+        'auth.createTitle': 'Create account',
+        'auth.createSubtitle': 'Register to access the client dashboard.',
+        'auth.needAccount': 'Need an account?',
+        'auth.haveAccount': 'Already have an account?',
+        'auth.createOne': 'Create one',
+        'auth.nameLabel': 'Name',
+        'auth.namePlaceholder': 'Your name',
+        'auth.emailLabel': 'Email',
+        'auth.passwordLabel': 'Password',
+        'auth.passwordPlaceholder': 'Password',
+        'auth.nameRequired': 'Name is required.',
+        'auth.createFailed': 'Failed to create account.',
+        'auth.loginFailed': 'Failed to log in.',
+        'auth.accountCreated': 'Account created. You can log in now.',
+        'auth.serverUnreachable': 'Could not reach the server.'
+      },
+      ar: {
+        'auth.signInTitle': 'تسجيل الدخول',
+        'auth.signInSubtitle': 'سجّل الدخول لإدارة عملائك.',
+        'auth.createTitle': 'إنشاء حساب',
+        'auth.createSubtitle': 'سجّل للوصول إلى لوحة إدارة العملاء.',
+        'auth.needAccount': 'ليس لديك حساب؟',
+        'auth.haveAccount': 'لديك حساب بالفعل؟',
+        'auth.createOne': 'إنشاء حساب',
+        'auth.nameLabel': 'الاسم',
+        'auth.namePlaceholder': 'اسمك',
+        'auth.emailLabel': 'البريد الإلكتروني',
+        'auth.passwordLabel': 'كلمة المرور',
+        'auth.passwordPlaceholder': 'كلمة المرور',
+        'auth.nameRequired': 'الاسم مطلوب.',
+        'auth.createFailed': 'فشل إنشاء الحساب.',
+        'auth.loginFailed': 'فشل تسجيل الدخول.',
+        'auth.accountCreated': 'تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.',
+        'auth.serverUnreachable': 'تعذر الوصول إلى الخادم.'
+      }
+    };
+
+    const serverErrorTranslations = {
+      'name, email and password required': 'الاسم والبريد الإلكتروني وكلمة المرور مطلوبة',
+      'password must be at least 8 characters': 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل',
+      'Email already registered': 'البريد الإلكتروني مسجل بالفعل',
+      'Invalid email or password': 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+    };
+
+    function t(key) {
+      const dict = translations[currentLanguage] || translations.en;
+      return dict[key] !== undefined ? dict[key] : key;
+    }
+
+    function translateServerError(message) {
+      if (currentLanguage === 'ar' && serverErrorTranslations[message]) {
+        return serverErrorTranslations[message];
+      }
+      return message;
+    }
+
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+      localStorage.setItem('appLanguage', lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+      });
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle) toggle.textContent = lang === 'en' ? 'العربية' : 'English';
+      setMode(mode);
+    }
+
+    const authForm = document.getElementById('auth-form');
+    const formTitle = document.getElementById('form-title');
+    const formSubtitle = document.getElementById('form-subtitle');
+    const nameRow = document.getElementById('name-row');
+    const nameInput = document.getElementById('name-input');
+    const emailInput = document.getElementById('email-input');
+    const passwordInput = document.getElementById('password-input');
+    const submitButton = document.getElementById('submit-button');
+    const toggleText = document.getElementById('toggle-text');
+    const toggleButton = document.getElementById('toggle-button');
+    const errorMessage = document.getElementById('error-message');
+
+    let mode = 'login';
+
+    function setMode(next) {
+      mode = next;
+      errorMessage.style.display = 'none';
+      if (mode === 'login') {
+        formTitle.textContent = t('auth.signInTitle');
+        formSubtitle.textContent = t('auth.signInSubtitle');
+        nameRow.style.display = 'none';
+        submitButton.textContent = t('auth.signInTitle');
+        toggleText.textContent = t('auth.needAccount');
+        toggleButton.textContent = t('auth.createOne');
+      } else {
+        formTitle.textContent = t('auth.createTitle');
+        formSubtitle.textContent = t('auth.createSubtitle');
+        nameRow.style.display = 'grid';
+        submitButton.textContent = t('auth.createTitle');
+        toggleText.textContent = t('auth.haveAccount');
+        toggleButton.textContent = t('auth.signInTitle');
+      }
+    }
+
+    toggleButton.addEventListener('click', () => setMode(mode === 'login' ? 'register' : 'login'));
+
+    function showError(message, color) {
+      errorMessage.textContent = message;
+      errorMessage.style.color = color || 'var(--bp-danger)';
+      errorMessage.style.display = 'block';
+    }
+
+    authForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) return;
+
+      submitButton.disabled = true;
+      errorMessage.style.display = 'none';
+
+      (async () => {
+        try {
+          if (mode === 'register') {
+            const name = nameInput.value.trim();
+            if (!name) {
+              showError(t('auth.nameRequired'));
+              return;
+            }
+            const res = await fetch(`${API_BASE}/auth/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, email, password })
+            });
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              showError(body.error ? translateServerError(body.error) : t('auth.createFailed'));
+              return;
+            }
+            setMode('login');
+            showError(t('auth.accountCreated'), 'var(--bp-success)');
+            return;
+          }
+
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            showError(body.error ? translateServerError(body.error) : t('auth.loginFailed'));
+            return;
+          }
+          const { token, user } = await res.json();
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('authUser', JSON.stringify(user));
+          window.location.href = 'Client.html';
+        } catch (err) {
+          console.error(err);
+          showError(t('auth.serverUnreachable'));
+        } finally {
+          submitButton.disabled = false;
+        }
+      })();
+    });
+
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      applyLanguage(currentLanguage === 'en' ? 'ar' : 'en');
+    });
+
+    applyLanguage(currentLanguage);
+
+    if (localStorage.getItem('authToken')) {
+      window.location.href = 'Client.html';
+    }
+  </script>
+</body>
+</html>

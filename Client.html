@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Pro</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --bp-navy: #0b2f5c;
+      --bp-navy-dark: #071f40;
+      --bp-navy-tint: rgba(11, 47, 92, 0.06);
+      --bp-ink: #0f172a;
+      --bp-body: #475569;
+      --bp-muted: #64748b;
+      --bp-border: #e2e8f0;
+      --bp-bg: #f4f6f8;
+      --bp-surface: #ffffff;
+      --bp-danger: #b42318;
+      --bp-danger-bg: #fef2f2;
+      --bp-danger-border: #fecdca;
+      --bp-success: #067647;
+      --bp-success-bg: #ecfdf3;
+      --bp-success-border: #abefc6;
+      --bp-warning: #b54708;
+      --bp-warning-bg: #fffaeb;
+      --bp-warning-border: #fedf89;
+      --bp-neutral: #364152;
+      --bp-neutral-bg: #f2f4f7;
+      --bp-neutral-border: #d0d5dd;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      color: var(--bp-ink);
+      background: var(--bp-bg);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bp-bg);
+    }
+
+    .app-header {
+      background: var(--bp-surface);
+      border-bottom: 1px solid var(--bp-border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .app-header-inner {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: var(--bp-navy);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
+    }
+
+    .brand-text strong {
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      color: var(--bp-ink);
+    }
+
+    .brand-text span {
+      font-size: 0.72rem;
+      color: var(--bp-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .user-greeting {
+      color: var(--bp-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px 32px 40px;
+    }
+
+    .page-intro {
+      margin: 0 0 22px;
+      color: var(--bp-body);
+      max-width: 640px;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .add-client-form {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+      overflow: auto;
+    }
+
+    .add-client-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-row label {
+      font-size: 0.85rem;
+      color: var(--bp-body);
+      font-weight: 600;
+    }
+
+    .field-row input,
+    .field-row select,
+    .field-row textarea {
+      width: 100%;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--bp-surface);
+      color: var(--bp-ink);
+    }
+
+    .field-row input:focus,
+    .field-row select:focus,
+    .field-row textarea:focus {
+      outline: 3px solid var(--bp-navy-tint);
+      border-color: var(--bp-navy);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .button.primary {
+      background: var(--bp-navy);
+      color: #ffffff;
+      border-color: var(--bp-navy);
+    }
+
+    .button.primary:hover {
+      background: var(--bp-navy-dark);
+      border-color: var(--bp-navy-dark);
+    }
+
+    .button.neutral {
+      background: var(--bp-surface);
+      color: var(--bp-ink);
+      border-color: var(--bp-border);
+    }
+
+    .button.neutral:hover {
+      background: var(--bp-bg);
+    }
+
+    .button.danger {
+      background: var(--bp-surface);
+      color: var(--bp-danger);
+      border-color: var(--bp-danger-border);
+    }
+
+    .button.danger:hover {
+      background: var(--bp-danger-bg);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .summary-card {
+      background: var(--bp-surface);
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 96px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .summary-card strong {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1;
+      display: block;
+      color: var(--bp-ink);
+    }
+
+    .summary-card span {
+      color: var(--bp-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 18px;
+      min-height: 680px;
+    }
+
+    .panel {
+      background: var(--bp-surface);
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .panel-left {
+      min-height: 0;
+    }
+
+    .panel-right {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-header,
+    .panel-footer {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--bp-border);
+      background: #fbfcfd;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--bp-ink);
+    }
+
+    .search-row {
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--bp-border);
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--bp-surface);
+      color: var(--bp-ink);
+    }
+
+    .search-input:focus {
+      outline: 3px solid var(--bp-navy-tint);
+      border-color: var(--bp-navy);
+    }
+
+    .client-list-wrapper {
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+    }
+
+    .client-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .client-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 15px 22px;
+      border-top: 1px solid #f1f5f9;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .client-row:first-child {
+      border-top: none;
+    }
+
+    .client-row:hover {
+      background: #f8fafc;
+    }
+
+    .client-row.selected {
+      background: var(--bp-navy-tint);
+      border-left-color: var(--bp-navy);
+    }
+
+    .client-row .company-entry {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .client-row .company-entry strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .avatar-lg {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bp-navy-tint);
+      color: var(--bp-navy);
+      font-weight: 700;
+      user-select: none;
+      width: 64px;
+      height: 64px;
+      font-size: 1.3rem;
+      border-radius: var(--radius-md);
+    }
+
+    .detail-scroll {
+      overflow: auto;
+      padding: 22px;
+    }
+
+    .detail-card {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .detail-card h3 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--bp-ink);
+    }
+
+    .detail-card p {
+      margin: 0;
+      color: var(--bp-muted);
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 9px 12px;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      background: var(--bp-surface);
+    }
+
+    .info-row span {
+      color: var(--bp-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .info-row strong {
+      color: var(--bp-ink);
+      font-size: 0.92rem;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .briefing-block {
+      margin-top: 12px;
+      padding: 16px;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      background: #fbfcfd;
+    }
+
+    .briefing-block span {
+      display: block;
+      color: var(--bp-muted);
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .briefing-block p {
+      margin: 0;
+      color: var(--bp-ink);
+      font-size: 0.92rem;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .company-entry {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .company-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--bp-navy-tint);
+      color: var(--bp-navy);
+      font-weight: 700;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .company-entry strong {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--bp-ink);
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      color: var(--bp-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--bp-border);
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--bp-border);
+    }
+
+    .section-title-row .section-title {
+      margin: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .note-item {
+      background: #fbfcfd;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .note-item p {
+      margin: 0 0 8px;
+      color: var(--bp-body);
+      line-height: 1.6;
+      font-size: 0.9rem;
+    }
+
+    .note-item small {
+      color: var(--bp-muted);
+      font-size: 0.78rem;
+    }
+
+    .note-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .note-input-row input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .note-input-row input:focus {
+      outline: 3px solid var(--bp-navy-tint);
+      border-color: var(--bp-navy);
+    }
+
+    .companies-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .company-card {
+      background: #fbfcfd;
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .company-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .company-card-header strong {
+      font-size: 0.95rem;
+      color: var(--bp-ink);
+    }
+
+    .company-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 16px;
+    }
+
+    .company-fields div {
+      font-size: 0.85rem;
+      color: var(--bp-body);
+    }
+
+    .company-fields span {
+      display: block;
+      color: var(--bp-muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .admin-table-wrapper {
+      background: var(--bp-surface);
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      overflow-x: auto;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .admin-table th,
+    .admin-table td {
+      text-align: left;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--bp-border);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    .admin-table thead th {
+      background: #fbfcfd;
+      color: var(--bp-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .admin-table tbody td {
+      color: var(--bp-body);
+    }
+
+    .admin-table tbody td:first-child {
+      color: var(--bp-ink);
+      font-weight: 600;
+    }
+
+    .admin-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .admin-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .company-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .company-form-grid input,
+    .company-form-grid select,
+    .company-form-grid textarea {
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--bp-surface);
+      color: var(--bp-ink);
+      width: 100%;
+    }
+
+    .company-form-grid input:focus,
+    .company-form-grid select:focus,
+    .company-form-grid textarea:focus {
+      outline: 3px solid var(--bp-navy-tint);
+      border-color: var(--bp-navy);
+    }
+
+    .engagement-card {
+      border: 1px solid var(--bp-border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      background: #fbfcfd;
+      display: grid;
+      gap: 14px;
+    }
+
+    .engagement-card h4 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--bp-ink);
+    }
+
+    .engagement-card p {
+      margin: 0;
+      color: var(--bp-muted);
+      line-height: 1.6;
+      font-size: 0.88rem;
+    }
+
+    .engagement-card .button {
+      width: fit-content;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--bp-border);
+      margin-bottom: 22px;
+      gap: 24px;
+    }
+
+    .tab-button {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 2px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--bp-muted);
+      cursor: pointer;
+    }
+
+    .tab-button:hover {
+      color: var(--bp-ink);
+    }
+
+    .tab-button.active {
+      color: var(--bp-navy);
+      border-bottom-color: var(--bp-navy);
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @media (max-width: 1100px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-right {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 780px) {
+      .app-header-inner {
+        padding: 14px 18px;
+      }
+
+      .page {
+        padding: 20px 18px 32px;
+      }
+
+      .summary {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .panel {
+        border-radius: var(--radius-md);
+      }
+
+      .panel-header,
+      .panel-footer,
+      .detail-scroll {
+        padding: 16px;
+      }
+
+      .add-client-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .company-form-grid,
+      .company-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    [dir="rtl"] .client-row {
+      border-left: none;
+      border-right: 3px solid transparent;
+    }
+
+    [dir="rtl"] .client-row.selected {
+      border-left-color: transparent;
+      border-right-color: var(--bp-navy);
+    }
+
+    [dir="rtl"] .admin-table th,
+    [dir="rtl"] .admin-table td {
+      text-align: right;
+    }
+
+    [dir="rtl"] .user-greeting {
+      margin-right: 0;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="brand">
+        <div class="brand-mark">BP</div>
+        <div class="brand-text">
+          <strong>Business Pro</strong>
+
+        </div>
+      </div>
+      <div class="actions">
+        <span class="user-greeting" id="user-greeting"></span>
+        <button class="button neutral" type="button" id="lang-toggle">العربية</button>
+        <button class="button neutral" type="button" id="logout-button" data-i18n="logout">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="tabs">
+      <button class="tab-button active" type="button" id="tab-button-phase1" data-tab="phase1" data-i18n="nav.phase1">Phase 1</button>
+      <button class="tab-button" type="button" id="tab-button-phase2" data-tab="phase2" data-i18n="nav.phase2">Phase 2</button>
+      <button class="tab-button" type="button" id="tab-button-phase3" data-tab="phase3" data-i18n="nav.phase3">Phase 3</button>
+      <button class="tab-button" type="button" id="tab-button-admin" data-tab="admin" data-i18n="nav.admin">Client administration</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-panel-phase1">
+    <section class="summary">
+      <div class="summary-card">
+        <span data-i18n="summary.total">Total clients</span>
+        <strong id="summary-total">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.prospects">Prospects</span>
+        <strong id="summary-prospect">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.active">Active</span>
+        <strong id="summary-active">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.inactive">Inactive</span>
+        <strong id="summary-inactive">0</strong>
+      </div>
+    </section>
+
+    <div class="main-grid">
+      <section class="panel panel-left">
+        <div class="panel-header">
+          <div>
+            <h2 data-i18n="directory.title">Client Directory</h2>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="button primary" type="button" id="add-client-button" data-i18n="directory.addClient">Add client</button>
+          </div>
+        </div>
+        <div class="search-row">
+          <input type="text" class="search-input" id="client-search" placeholder="Search by name or phone" data-i18n-placeholder="search.placeholder">
+        </div>
+        <div class="client-list-wrapper">
+          <ul class="client-list" id="client-table-body"></ul>
+        </div>
+      </section>
+
+      <section class="panel panel-right">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <h2 style="margin:0;" data-i18n="details.title">Details</h2>
+          </div>
+        </div>
+        <section class="add-client-form" id="add-client-form" style="display:none;">
+          <h3 class="section-title" id="add-client-form-title" style="margin-top:0;">Add new client</h3>
+          <div class="add-client-grid">
+            <div class="field-row">
+              <label for="new-client-contact" data-i18n="client.contactName">Contact name</label>
+              <input id="new-client-contact" type="text" placeholder="Contact name" data-i18n-placeholder="client.contactName">
+            </div>
+            <div class="field-row">
+              <label for="new-client-email" data-i18n="common.email">Email</label>
+              <input id="new-client-email" type="email" placeholder="Email" data-i18n-placeholder="common.email" dir="ltr">
+            </div>
+            <div class="field-row">
+              <label for="new-client-phone" data-i18n="common.phone">Phone</label>
+              <input id="new-client-phone" type="tel" placeholder="+966-000-000-0000" dir="ltr">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="button neutral" id="cancel-client-button" type="button" data-i18n="common.cancel">Cancel</button>
+            <button class="button primary" id="save-client-button" type="button">Save client</button>
+          </div>
+        </section>
+        <div class="detail-scroll" id="detail-scroll">
+          <div class="detail-card" id="detail-header">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="avatar-lg" id="detail-avatar">AA</div>
+              <div>
+                <h3 id="detail-name">Select a client</h3>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title-row">
+              <h3 class="section-title" data-i18n="details.contactInfo">Contact information</h3>
+              <button class="button neutral" type="button" id="edit-client-button" data-i18n="client.editButton">Edit client</button>
+            </div>
+            <div class="info-grid">
+              <div class="info-row">
+                <span data-i18n="details.clientNameLabel">Client name</span>
+                <strong id="detail-contact">–</strong>
+              </div>
+              <div class="info-row">
+                <span data-i18n="common.email">Email</span>
+                <strong id="detail-email">–</strong>
+              </div>
+              <div class="info-row">
+                <span data-i18n="common.phone">Phone</span>
+                <strong id="detail-phone">–</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:26px;">
+            <h3 class="section-title" data-i18n="companies.title">Companies</h3>
+            <div class="companies-list" id="companies-list"></div>
+            <div id="company-form-section">
+              <div class="company-form-grid">
+                <input id="new-company-name" placeholder="Company name" data-i18n-placeholder="companies.namePlaceholder">
+                <select id="new-company-region">
+                  <option value="" data-i18n="companies.region">Region</option>
+                  <option value="Riyadh" data-i18n="place.riyadh">Riyadh</option>
+                  <option value="Makkah" data-i18n="place.makkah">Makkah</option>
+                  <option value="Madinah" data-i18n="place.madinah">Madinah</option>
+                  <option value="Qassim" data-i18n="place.qassim">Qassim</option>
+                  <option value="Eastern Province" data-i18n="place.easternProvince">Eastern Province</option>
+                  <option value="Asir" data-i18n="place.asir">Asir</option>
+                  <option value="Tabuk" data-i18n="place.tabuk">Tabuk</option>
+                  <option value="Hail" data-i18n="place.hail">Hail</option>
+                  <option value="Northern Borders" data-i18n="place.northernBorders">Northern Borders</option>
+                  <option value="Jazan" data-i18n="place.jazan">Jazan</option>
+                  <option value="Najran" data-i18n="place.najran">Najran</option>
+                  <option value="Al Bahah" data-i18n="place.albahah">Al Bahah</option>
+                  <option value="Al Jouf" data-i18n="place.aljouf">Al Jouf</option>
+                </select>
+                <select id="new-company-city">
+                  <option value="" data-i18n="companies.city">City</option>
+                  <option value="Riyadh" data-i18n="place.riyadh">Riyadh</option>
+                  <option value="Jeddah" data-i18n="place.jeddah">Jeddah</option>
+                  <option value="Makkah" data-i18n="place.makkah">Makkah</option>
+                  <option value="Madinah" data-i18n="place.madinah">Madinah</option>
+                  <option value="Dammam" data-i18n="place.dammam">Dammam</option>
+                  <option value="Khobar" data-i18n="place.khobar">Khobar</option>
+                  <option value="Dhahran" data-i18n="place.dhahran">Dhahran</option>
+                  <option value="Taif" data-i18n="place.taif">Taif</option>
+                  <option value="Tabuk" data-i18n="place.tabuk">Tabuk</option>
+                  <option value="Abha" data-i18n="place.abha">Abha</option>
+                  <option value="Khamis Mushait" data-i18n="place.khamisMushait">Khamis Mushait</option>
+                  <option value="Buraidah" data-i18n="place.buraidah">Buraidah</option>
+                  <option value="Hail" data-i18n="place.hail">Hail</option>
+                  <option value="Najran" data-i18n="place.najran">Najran</option>
+                  <option value="Jazan" data-i18n="place.jazan">Jazan</option>
+                  <option value="Al Bahah" data-i18n="place.albahah">Al Bahah</option>
+                  <option value="Sakaka" data-i18n="place.sakaka">Sakaka</option>
+                  <option value="Yanbu" data-i18n="place.yanbu">Yanbu</option>
+                  <option value="Jubail" data-i18n="place.jubail">Jubail</option>
+                  <option value="Hafr Al-Batin" data-i18n="place.hafrAlBatin">Hafr Al-Batin</option>
+                  <option value="Arar" data-i18n="place.arar">Arar</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <select id="new-company-country">
+                  <option value="" data-i18n="companies.country">Country</option>
+                  <option value="Saudi Arabia" data-i18n="country.sa">Saudi Arabia</option>
+                  <option value="United Arab Emirates" data-i18n="country.ae">United Arab Emirates</option>
+                  <option value="Bahrain" data-i18n="country.bh">Bahrain</option>
+                  <option value="Kuwait" data-i18n="country.kw">Kuwait</option>
+                  <option value="Oman" data-i18n="country.om">Oman</option>
+                  <option value="Qatar" data-i18n="country.qa">Qatar</option>
+                  <option value="Egypt" data-i18n="country.eg">Egypt</option>
+                  <option value="Jordan" data-i18n="country.jo">Jordan</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <input id="new-company-cr" placeholder="Commercial registration number" data-i18n-placeholder="companies.crPlaceholder">
+                <input id="new-company-vat" placeholder="VAT number" data-i18n-placeholder="companies.vat">
+                <input id="new-company-contact-person" placeholder="Contact person name" data-i18n-placeholder="companies.contactPersonPlaceholder">
+                <input id="new-company-additional-phone" placeholder="Additional phone number" data-i18n-placeholder="companies.additionalPhonePlaceholder">
+                <select id="new-company-industry">
+                  <option value="" data-i18n="companies.industry">Industry</option>
+                  <option value="Data analytics" data-i18n="industry.dataAnalytics">Data analytics</option>
+                  <option value="Retail" data-i18n="industry.retail">Retail</option>
+                  <option value="Engineering" data-i18n="industry.engineering">Engineering</option>
+                  <option value="Healthcare" data-i18n="industry.healthcare">Healthcare</option>
+                  <option value="Finance" data-i18n="industry.finance">Finance</option>
+                  <option value="Marketing" data-i18n="industry.marketing">Marketing</option>
+                  <option value="Operations" data-i18n="industry.operations">Operations</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <input id="new-company-address" placeholder="National address" data-i18n-placeholder="companies.address">
+                <textarea id="new-company-briefing" placeholder="Short company overview" data-i18n-placeholder="companies.briefingPlaceholder" rows="3" style="grid-column: 1 / -1;"></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="button neutral" id="cancel-company-button" type="button" data-i18n="common.cancel">Cancel</button>
+                <button class="button primary" id="add-company-button" type="button">Add company</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:26px;">
+            <h3 class="section-title" data-i18n="notes.title">Call log</h3>
+            <div class="notes-list" id="notes-list"></div>
+            <div class="note-input-row">
+              <input id="new-note" type="text" placeholder="Log a new outreach note" data-i18n-placeholder="notes.placeholder" autocomplete="off">
+              <button class="button primary" id="add-note-button" type="button" data-i18n="notes.add">Add note</button>
+            </div>
+          </div>
+
+          <div class="engagement-card" id="pipeline-card">
+            <div>
+              <h4 data-i18n="pipeline.title">Take Action</h4>
+              <p data-i18n="pipeline.description">Send this client into the pipeline to begin tracking their upcoming opportunity.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="button primary" id="pipeline-button" type="button" data-i18n="pipeline.nextPhase">Next Phase</button>
+              <button class="button danger" id="delete-client-button" type="button" data-i18n="pipeline.deleteClient">Delete client</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    </div>
+
+    <div class="tab-panel" id="tab-panel-phase2">
+    <section class="summary">
+      <div class="summary-card">
+        <span data-i18n="summary.total">Total clients</span>
+        <strong id="summary-total-phase2">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.prospects">Prospects</span>
+        <strong id="summary-prospect-phase2">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.active">Active</span>
+        <strong id="summary-active-phase2">0</strong>
+      </div>
+      <div class="summary-card">
+        <span data-i18n="summary.inactive">Inactive</span>
+        <strong id="summary-inactive-phase2">0</strong>
+      </div>
+    </section>
+
+    <div class="main-grid">
+      <section class="panel panel-left">
+        <div class="panel-header">
+          <div>
+            <h2 data-i18n="directory.title">Client Directory</h2>
+          </div>
+        </div>
+        <div class="search-row">
+          <input type="text" class="search-input" id="client-search-phase2" placeholder="Search by name or phone" data-i18n-placeholder="search.placeholder">
+        </div>
+        <div class="client-list-wrapper">
+          <ul class="client-list" id="client-table-body-phase2"></ul>
+        </div>
+      </section>
+
+      <section class="panel panel-right">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <h2 style="margin:0;" data-i18n="details.title">Details</h2>
+          </div>
+        </div>
+        <section class="add-client-form" id="add-client-form-phase2" style="display:none;">
+          <h3 class="section-title" id="add-client-form-title-phase2" style="margin-top:0;">Add new client</h3>
+          <div class="add-client-grid">
+            <div class="field-row">
+              <label for="new-client-contact-phase2" data-i18n="client.contactName">Contact name</label>
+              <input id="new-client-contact-phase2" type="text" placeholder="Contact name" data-i18n-placeholder="client.contactName">
+            </div>
+            <div class="field-row">
+              <label for="new-client-email-phase2" data-i18n="common.email">Email</label>
+              <input id="new-client-email-phase2" type="email" placeholder="Email" data-i18n-placeholder="common.email" dir="ltr">
+            </div>
+            <div class="field-row">
+              <label for="new-client-phone-phase2" data-i18n="common.phone">Phone</label>
+              <input id="new-client-phone-phase2" type="tel" placeholder="+966-000-000-0000" dir="ltr">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="button neutral" id="cancel-client-button-phase2" type="button" data-i18n="common.cancel">Cancel</button>
+            <button class="button primary" id="save-client-button-phase2" type="button">Save client</button>
+          </div>
+        </section>
+        <div class="detail-scroll" id="detail-scroll-phase2">
+          <div class="detail-card" id="detail-header-phase2">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="avatar-lg" id="detail-avatar-phase2">AA</div>
+              <div>
+                <h3 id="detail-name-phase2">Select a client</h3>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title-row">
+              <h3 class="section-title" data-i18n="details.contactInfo">Contact information</h3>
+            </div>
+            <div class="info-grid">
+              <div class="info-row">
+                <span data-i18n="details.clientNameLabel">Client name</span>
+                <strong id="detail-contact-phase2">–</strong>
+              </div>
+              <div class="info-row">
+                <span data-i18n="common.email">Email</span>
+                <strong id="detail-email-phase2">–</strong>
+              </div>
+              <div class="info-row">
+                <span data-i18n="common.phone">Phone</span>
+                <strong id="detail-phone-phase2">–</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:26px;">
+            <h3 class="section-title" data-i18n="companies.title">Companies</h3>
+            <div class="companies-list" id="companies-list-phase2"></div>
+            <div id="company-form-section-phase2">
+              <div class="company-form-grid">
+                <input id="new-company-name-phase2" placeholder="Company name" data-i18n-placeholder="companies.namePlaceholder">
+                <select id="new-company-region-phase2">
+                  <option value="" data-i18n="companies.region">Region</option>
+                  <option value="Riyadh" data-i18n="place.riyadh">Riyadh</option>
+                  <option value="Makkah" data-i18n="place.makkah">Makkah</option>
+                  <option value="Madinah" data-i18n="place.madinah">Madinah</option>
+                  <option value="Qassim" data-i18n="place.qassim">Qassim</option>
+                  <option value="Eastern Province" data-i18n="place.easternProvince">Eastern Province</option>
+                  <option value="Asir" data-i18n="place.asir">Asir</option>
+                  <option value="Tabuk" data-i18n="place.tabuk">Tabuk</option>
+                  <option value="Hail" data-i18n="place.hail">Hail</option>
+                  <option value="Northern Borders" data-i18n="place.northernBorders">Northern Borders</option>
+                  <option value="Jazan" data-i18n="place.jazan">Jazan</option>
+                  <option value="Najran" data-i18n="place.najran">Najran</option>
+                  <option value="Al Bahah" data-i18n="place.albahah">Al Bahah</option>
+                  <option value="Al Jouf" data-i18n="place.aljouf">Al Jouf</option>
+                </select>
+                <select id="new-company-city-phase2">
+                  <option value="" data-i18n="companies.city">City</option>
+                  <option value="Riyadh" data-i18n="place.riyadh">Riyadh</option>
+                  <option value="Jeddah" data-i18n="place.jeddah">Jeddah</option>
+                  <option value="Makkah" data-i18n="place.makkah">Makkah</option>
+                  <option value="Madinah" data-i18n="place.madinah">Madinah</option>
+                  <option value="Dammam" data-i18n="place.dammam">Dammam</option>
+                  <option value="Khobar" data-i18n="place.khobar">Khobar</option>
+                  <option value="Dhahran" data-i18n="place.dhahran">Dhahran</option>
+                  <option value="Taif" data-i18n="place.taif">Taif</option>
+                  <option value="Tabuk" data-i18n="place.tabuk">Tabuk</option>
+                  <option value="Abha" data-i18n="place.abha">Abha</option>
+                  <option value="Khamis Mushait" data-i18n="place.khamisMushait">Khamis Mushait</option>
+                  <option value="Buraidah" data-i18n="place.buraidah">Buraidah</option>
+                  <option value="Hail" data-i18n="place.hail">Hail</option>
+                  <option value="Najran" data-i18n="place.najran">Najran</option>
+                  <option value="Jazan" data-i18n="place.jazan">Jazan</option>
+                  <option value="Al Bahah" data-i18n="place.albahah">Al Bahah</option>
+                  <option value="Sakaka" data-i18n="place.sakaka">Sakaka</option>
+                  <option value="Yanbu" data-i18n="place.yanbu">Yanbu</option>
+                  <option value="Jubail" data-i18n="place.jubail">Jubail</option>
+                  <option value="Hafr Al-Batin" data-i18n="place.hafrAlBatin">Hafr Al-Batin</option>
+                  <option value="Arar" data-i18n="place.arar">Arar</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <select id="new-company-country-phase2">
+                  <option value="" data-i18n="companies.country">Country</option>
+                  <option value="Saudi Arabia" data-i18n="country.sa">Saudi Arabia</option>
+                  <option value="United Arab Emirates" data-i18n="country.ae">United Arab Emirates</option>
+                  <option value="Bahrain" data-i18n="country.bh">Bahrain</option>
+                  <option value="Kuwait" data-i18n="country.kw">Kuwait</option>
+                  <option value="Oman" data-i18n="country.om">Oman</option>
+                  <option value="Qatar" data-i18n="country.qa">Qatar</option>
+                  <option value="Egypt" data-i18n="country.eg">Egypt</option>
+                  <option value="Jordan" data-i18n="country.jo">Jordan</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <input id="new-company-cr-phase2" placeholder="Commercial registration number" data-i18n-placeholder="companies.crPlaceholder">
+                <input id="new-company-vat-phase2" placeholder="VAT number" data-i18n-placeholder="companies.vat">
+                <input id="new-company-contact-person-phase2" placeholder="Contact person name" data-i18n-placeholder="companies.contactPersonPlaceholder">
+                <input id="new-company-additional-phone-phase2" placeholder="Additional phone number" data-i18n-placeholder="companies.additionalPhonePlaceholder">
+                <select id="new-company-industry-phase2">
+                  <option value="" data-i18n="companies.industry">Industry</option>
+                  <option value="Data analytics" data-i18n="industry.dataAnalytics">Data analytics</option>
+                  <option value="Retail" data-i18n="industry.retail">Retail</option>
+                  <option value="Engineering" data-i18n="industry.engineering">Engineering</option>
+                  <option value="Healthcare" data-i18n="industry.healthcare">Healthcare</option>
+                  <option value="Finance" data-i18n="industry.finance">Finance</option>
+                  <option value="Marketing" data-i18n="industry.marketing">Marketing</option>
+                  <option value="Operations" data-i18n="industry.operations">Operations</option>
+                  <option value="Other" data-i18n="common.other">Other</option>
+                </select>
+                <input id="new-company-address-phase2" placeholder="National address" data-i18n-placeholder="companies.address">
+                <textarea id="new-company-briefing-phase2" placeholder="Short company overview" data-i18n-placeholder="companies.briefingPlaceholder" rows="3" style="grid-column: 1 / -1;"></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="button neutral" id="cancel-company-button-phase2" type="button" data-i18n="common.cancel">Cancel</button>
+                <button class="button primary" id="add-company-button-phase2" type="button">Add company</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:26px;">
+            <h3 class="section-title" data-i18n="notes.title">Call log</h3>
+            <div class="notes-list" id="notes-list-phase2"></div>
+            <div class="note-input-row">
+              <input id="new-note-phase2" type="text" placeholder="Log a new outreach note" data-i18n-placeholder="notes.placeholder" autocomplete="off">
+              <button class="button primary" id="add-note-button-phase2" type="button" data-i18n="notes.add">Add note</button>
+            </div>
+          </div>
+
+          <div class="engagement-card" id="pipeline-card-phase2">
+            <div>
+              <h4 data-i18n="pipeline.title">Take Action</h4>
+              <p data-i18n="pipeline.description">Send this client into the pipeline to begin tracking their upcoming opportunity.</p>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="button primary" id="pipeline-button-phase2" type="button" data-i18n="pipeline.nextPhase">Next Phase</button>
+              <button class="button danger" id="delete-client-button-phase2" type="button" data-i18n="pipeline.dealCanceled">Deal Canceled</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    </div>
+
+    <div class="tab-panel" id="tab-panel-phase3">
+      <p class="page-intro" data-i18n="phase3.placeholder">Phase 3 — content coming soon.</p>
+    </div>
+
+    <div class="tab-panel" id="tab-panel-admin">
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div style="max-width:320px; flex:1; min-width:220px;">
+          <input type="text" class="search-input" id="admin-search" placeholder="Search by name or phone" data-i18n-placeholder="search.placeholder">
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="button neutral" type="button" id="import-button" data-i18n="directory.import">Import list</button>
+          <button class="button neutral" type="button" id="export-button" data-i18n="directory.export">Export list</button>
+          <input type="file" id="import-file" accept=".csv" style="display:none">
+        </div>
+      </div>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th data-i18n="client.contactName">Contact name</th>
+              <th data-i18n="admin.companyNameHeader">Company name</th>
+              <th data-i18n="common.email">Email</th>
+              <th data-i18n="common.phone">Phone</th>
+              <th data-i18n="admin.stageHeader">Stage</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-clients-grid"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:3001';
+
+    let currentLanguage = localStorage.getItem('appLanguage') || 'en';
+    const translations = {
+      en: {
+        'common.email': 'Email',
+        'common.phone': 'Phone',
+        'common.cancel': 'Cancel',
+        'common.saveChanges': 'Save changes',
+        'common.other': 'Other',
+        'common.editShort': 'Edit',
+        'common.remove': 'Remove',
+        'common.selectClientFirst': 'Select a client first.',
+        'nav.phase1': 'Phase 1',
+        'nav.phase2': 'Phase 2',
+        'nav.phase3': 'Phase 3',
+        'nav.admin': 'Client administration',
+        'logout': 'Log out',
+        'greeting.welcome': 'Welcome, {name}',
+        'summary.total': 'Total clients',
+        'summary.prospects': 'Prospects',
+        'summary.active': 'Active',
+        'summary.inactive': 'Inactive',
+        'directory.title': 'Client Directory',
+        'directory.import': 'Import list',
+        'directory.export': 'Export list',
+        'directory.addClient': 'Add client',
+        'search.placeholder': 'Search by name or phone',
+        'details.title': 'Details',
+        'details.selectClient': 'Select a client',
+        'details.contactInfo': 'Contact information',
+        'details.clientNameLabel': 'Client name',
+        'client.addTitle': 'Add new client',
+        'client.editTitle': 'Edit client',
+        'client.editButton': 'Edit client',
+        'client.contactName': 'Contact name',
+        'client.save': 'Save client',
+        'client.contactRequired': 'Contact name is required.',
+        'client.saveFailed': 'Failed to save client.',
+        'client.noneSelectedEdit': 'No client selected to edit.',
+        'client.noneSelected': 'No client selected.',
+        'client.confirmCancel': 'Mark {name} as inactive? Their record is kept, but they\'ll no longer appear here as an open deal.',
+        'client.updateFailed': 'Failed to update client',
+        'companies.title': 'Companies',
+        'companies.empty': 'No companies registered yet.',
+        'companies.namePlaceholder': 'Company name',
+        'companies.region': 'Region',
+        'companies.city': 'City',
+        'companies.country': 'Country',
+        'companies.crLabel': 'CR number',
+        'companies.crPlaceholder': 'Commercial registration number',
+        'companies.vat': 'VAT number',
+        'companies.contactPersonLabel': 'Contact person',
+        'companies.contactPersonPlaceholder': 'Contact person name',
+        'companies.additionalPhoneLabel': 'Additional phone',
+        'companies.additionalPhonePlaceholder': 'Additional phone number',
+        'companies.industry': 'Industry',
+        'companies.address': 'National address',
+        'companies.briefingPlaceholder': 'Short company overview',
+        'companies.briefingLabel': 'Briefing',
+        'companies.add': 'Add company',
+        'companies.nameRequired': 'Company name is required.',
+        'companies.saveFailed': 'Failed to save company',
+        'companies.confirmRemove': 'Remove company "{name}"? This cannot be undone.',
+        'companies.removeFailed': 'Failed to remove company',
+        'place.riyadh': 'Riyadh',
+        'place.makkah': 'Makkah',
+        'place.madinah': 'Madinah',
+        'place.qassim': 'Qassim',
+        'place.easternProvince': 'Eastern Province',
+        'place.asir': 'Asir',
+        'place.tabuk': 'Tabuk',
+        'place.hail': 'Hail',
+        'place.northernBorders': 'Northern Borders',
+        'place.jazan': 'Jazan',
+        'place.najran': 'Najran',
+        'place.albahah': 'Al Bahah',
+        'place.aljouf': 'Al Jouf',
+        'place.jeddah': 'Jeddah',
+        'place.dammam': 'Dammam',
+        'place.khobar': 'Khobar',
+        'place.dhahran': 'Dhahran',
+        'place.taif': 'Taif',
+        'place.abha': 'Abha',
+        'place.khamisMushait': 'Khamis Mushait',
+        'place.buraidah': 'Buraidah',
+        'place.sakaka': 'Sakaka',
+        'place.yanbu': 'Yanbu',
+        'place.jubail': 'Jubail',
+        'place.hafrAlBatin': 'Hafr Al-Batin',
+        'place.arar': 'Arar',
+        'country.sa': 'Saudi Arabia',
+        'country.ae': 'United Arab Emirates',
+        'country.bh': 'Bahrain',
+        'country.kw': 'Kuwait',
+        'country.om': 'Oman',
+        'country.qa': 'Qatar',
+        'country.eg': 'Egypt',
+        'country.jo': 'Jordan',
+        'industry.dataAnalytics': 'Data analytics',
+        'industry.retail': 'Retail',
+        'industry.engineering': 'Engineering',
+        'industry.healthcare': 'Healthcare',
+        'industry.finance': 'Finance',
+        'industry.marketing': 'Marketing',
+        'industry.operations': 'Operations',
+        'notes.title': 'Call log',
+        'notes.empty': 'No notes logged yet.',
+        'notes.placeholder': 'Log a new outreach note',
+        'notes.add': 'Add note',
+        'notes.unknownAuthor': 'Unknown',
+        'notes.addFailed': 'Failed to add note',
+        'pipeline.title': 'Take Action',
+        'pipeline.description': 'Send this client into the pipeline to begin tracking their upcoming opportunity.',
+        'pipeline.nextPhase': 'Next Phase',
+        'pipeline.deleteClient': 'Delete client',
+        'pipeline.dealCanceled': 'Deal Canceled',
+        'pipeline.createFailed': 'Failed to create engagement',
+        'phase3.placeholder': 'Phase 3 — content coming soon.',
+        'admin.companyNameHeader': 'Company name',
+        'admin.stageHeader': 'Stage',
+        'admin.empty': 'No inactive clients.',
+        'admin.reactivate': 'Reactivate',
+        'admin.confirmReactivate': 'Reactivate {name}? They will return to Phase 1 as a Prospect.',
+        'admin.reactivateFailed': 'Failed to reactivate client',
+        'csv.emptyFile': 'CSV file must include a header row and at least one client row.',
+        'csv.missingColumns': 'CSV must contain these columns: {columns}',
+        'csv.noneImported': 'No clients were imported from the file.',
+        'csv.importFailed': 'Import failed',
+        'csv.exportFailed': 'Failed to export clients'
+      },
+      ar: {
+        'common.email': 'البريد الإلكتروني',
+        'common.phone': 'الهاتف',
+        'common.cancel': 'إلغاء',
+        'common.saveChanges': 'حفظ التغييرات',
+        'common.other': 'أخرى',
+        'common.editShort': 'تعديل',
+        'common.remove': 'إزالة',
+        'common.selectClientFirst': 'الرجاء اختيار عميل أولاً.',
+        'nav.phase1': 'المرحلة الأولى',
+        'nav.phase2': 'المرحلة الثانية',
+        'nav.phase3': 'المرحلة الثالثة',
+        'nav.admin': 'إدارة العملاء',
+        'logout': 'تسجيل الخروج',
+        'greeting.welcome': 'أهلاً بك، {name}',
+        'summary.total': 'إجمالي العملاء',
+        'summary.prospects': 'العملاء المحتملون',
+        'summary.active': 'نشط',
+        'summary.inactive': 'غير نشط',
+        'directory.title': 'دليل العملاء',
+        'directory.import': 'استيراد القائمة',
+        'directory.export': 'تصدير القائمة',
+        'directory.addClient': 'إضافة عميل',
+        'search.placeholder': 'ابحث بالاسم أو رقم الهاتف',
+        'details.title': 'التفاصيل',
+        'details.selectClient': 'اختر عميلاً',
+        'details.contactInfo': 'معلومات الاتصال',
+        'details.clientNameLabel': 'اسم العميل',
+        'client.addTitle': 'إضافة عميل جديد',
+        'client.editTitle': 'تعديل العميل',
+        'client.editButton': 'تعديل العميل',
+        'client.contactName': 'اسم جهة الاتصال',
+        'client.save': 'حفظ العميل',
+        'client.contactRequired': 'اسم جهة الاتصال مطلوب.',
+        'client.saveFailed': 'فشل حفظ العميل.',
+        'client.noneSelectedEdit': 'لم يتم اختيار عميل للتعديل.',
+        'client.noneSelected': 'لم يتم اختيار عميل.',
+        'client.confirmCancel': 'هل تريد تعيين {name} كغير نشط؟ سيتم الاحتفاظ بسجله، لكنه لن يظهر بعد الآن هنا كصفقة مفتوحة.',
+        'client.updateFailed': 'فشل تحديث بيانات العميل',
+        'companies.title': 'الشركات',
+        'companies.empty': 'لا توجد شركات مسجلة بعد.',
+        'companies.namePlaceholder': 'اسم الشركة',
+        'companies.region': 'المنطقة',
+        'companies.city': 'المدينة',
+        'companies.country': 'الدولة',
+        'companies.crLabel': 'رقم السجل التجاري',
+        'companies.crPlaceholder': 'رقم السجل التجاري',
+        'companies.vat': 'الرقم الضريبي',
+        'companies.contactPersonLabel': 'مسؤول التواصل',
+        'companies.contactPersonPlaceholder': 'اسم مسؤول التواصل',
+        'companies.additionalPhoneLabel': 'هاتف إضافي',
+        'companies.additionalPhonePlaceholder': 'رقم هاتف إضافي',
+        'companies.industry': 'المجال',
+        'companies.address': 'العنوان الوطني',
+        'companies.briefingPlaceholder': 'نبذة مختصرة عن الشركة',
+        'companies.briefingLabel': 'نبذة',
+        'companies.add': 'إضافة شركة',
+        'companies.nameRequired': 'اسم الشركة مطلوب.',
+        'companies.saveFailed': 'فشل حفظ بيانات الشركة',
+        'companies.confirmRemove': 'هل تريد إزالة شركة "{name}"؟ لا يمكن التراجع عن هذا الإجراء.',
+        'companies.removeFailed': 'فشل إزالة الشركة',
+        'place.riyadh': 'الرياض',
+        'place.makkah': 'مكة المكرمة',
+        'place.madinah': 'المدينة المنورة',
+        'place.qassim': 'القصيم',
+        'place.easternProvince': 'المنطقة الشرقية',
+        'place.asir': 'عسير',
+        'place.tabuk': 'تبوك',
+        'place.hail': 'حائل',
+        'place.northernBorders': 'الحدود الشمالية',
+        'place.jazan': 'جازان',
+        'place.najran': 'نجران',
+        'place.albahah': 'الباحة',
+        'place.aljouf': 'الجوف',
+        'place.jeddah': 'جدة',
+        'place.dammam': 'الدمام',
+        'place.khobar': 'الخبر',
+        'place.dhahran': 'الظهران',
+        'place.taif': 'الطائف',
+        'place.abha': 'أبها',
+        'place.khamisMushait': 'خميس مشيط',
+        'place.buraidah': 'بريدة',
+        'place.sakaka': 'سكاكا',
+        'place.yanbu': 'ينبع',
+        'place.jubail': 'الجبيل',
+        'place.hafrAlBatin': 'حفر الباطن',
+        'place.arar': 'عرعر',
+        'country.sa': 'المملكة العربية السعودية',
+        'country.ae': 'الإمارات العربية المتحدة',
+        'country.bh': 'البحرين',
+        'country.kw': 'الكويت',
+        'country.om': 'عمان',
+        'country.qa': 'قطر',
+        'country.eg': 'مصر',
+        'country.jo': 'الأردن',
+        'industry.dataAnalytics': 'تحليل البيانات',
+        'industry.retail': 'التجزئة',
+        'industry.engineering': 'الهندسة',
+        'industry.healthcare': 'الرعاية الصحية',
+        'industry.finance': 'المالية',
+        'industry.marketing': 'التسويق',
+        'industry.operations': 'العمليات',
+        'notes.title': 'سجل الاتصالات',
+        'notes.empty': 'لا توجد ملاحظات مسجلة بعد.',
+        'notes.placeholder': 'سجّل ملاحظة تواصل جديدة',
+        'notes.add': 'إضافة ملاحظة',
+        'notes.unknownAuthor': 'غير معروف',
+        'notes.addFailed': 'فشل إضافة الملاحظة',
+        'pipeline.title': 'اتخذ إجراءً',
+        'pipeline.description': 'أرسل هذا العميل إلى مسار العمل لبدء تتبع الفرصة القادمة.',
+        'pipeline.nextPhase': 'المرحلة التالية',
+        'pipeline.deleteClient': 'حذف العميل',
+        'pipeline.dealCanceled': 'تم إلغاء الصفقة',
+        'pipeline.createFailed': 'فشل إنشاء المشاركة',
+        'phase3.placeholder': 'المرحلة الثالثة — المحتوى قادم قريباً.',
+        'admin.companyNameHeader': 'اسم الشركة',
+        'admin.stageHeader': 'المرحلة',
+        'admin.empty': 'لا يوجد عملاء غير نشطين.',
+        'admin.reactivate': 'إعادة التنشيط',
+        'admin.confirmReactivate': 'هل تريد إعادة تنشيط {name}؟ سيعود كعميل محتمل في المرحلة الأولى.',
+        'admin.reactivateFailed': 'فشل إعادة تنشيط العميل',
+        'csv.emptyFile': 'يجب أن يحتوي ملف CSV على صف عناوين وصف بيانات واحد على الأقل.',
+        'csv.missingColumns': 'يجب أن يحتوي ملف CSV على هذه الأعمدة: {columns}',
+        'csv.noneImported': 'لم يتم استيراد أي عملاء من الملف.',
+        'csv.importFailed': 'فشل الاستيراد',
+        'csv.exportFailed': 'فشل تصدير العملاء'
+      }
+    };
+
+    function t(key) {
+      const dict = translations[currentLanguage] || translations.en;
+      return dict[key] !== undefined ? dict[key] : key;
+    }
+
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+      localStorage.setItem('appLanguage', lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+      });
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle) toggle.textContent = lang === 'en' ? 'العربية' : 'English';
+      renderUserGreeting();
+      // Static markup above is retranslated by the data-i18n sweep, but content built by JS
+      // (company cards, notes, admin rows, dynamic button labels) was only translated once at
+      // render time — refresh whatever is currently on screen so it doesn't stay stuck in the
+      // old language until the next unrelated re-render.
+      renderAdminGrid(filterInactiveClients());
+      phase1.refreshLanguage();
+      phase2.refreshLanguage();
+    }
+
+    function getAuthToken() {
+      return localStorage.getItem('authToken');
+    }
+
+    function requireAuth() {
+      if (!getAuthToken()) {
+        window.location.href = 'Login.html';
+        return false;
+      }
+      return true;
+    }
+
+    function renderUserGreeting() {
+      try {
+        const user = JSON.parse(localStorage.getItem('authUser') || 'null');
+        document.getElementById('user-greeting').textContent = user && user.name ? t('greeting.welcome').replace('{name}', user.name) : '';
+      } catch (err) {
+        document.getElementById('user-greeting').textContent = '';
+      }
+    }
+
+    async function apiFetch(path, options = {}) {
+      const token = getAuthToken();
+      const headers = Object.assign({}, options.headers, token ? { Authorization: `Bearer ${token}` } : {});
+      const res = await fetch(`${API_BASE}${path}`, Object.assign({}, options, { headers }));
+      if (res.status === 401) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+        window.location.href = 'Login.html';
+        throw new Error('Not authenticated');
+      }
+      return res;
+    }
+
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    function activateTab(tabName) {
+      tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+      tabPanels.forEach(panel => panel.classList.toggle('active', panel.id === `tab-panel-${tabName}`));
+    }
+
+    tabButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+
+    function initials(name) {
+      return name.split(' ').map(part => part[0]).slice(0, 2).join('').toUpperCase();
+    }
+
+    function parseCsvRows(text) {
+      return text
+        .trim()
+        .split(/\r?\n/)
+        .filter(line => line.trim())
+        .map(line => line.split(',').map(cell => cell.trim()));
+    }
+
+    function escapeCsvCell(str) {
+      if (str === null || str === undefined) return '';
+      return '"' + String(str).replace(/"/g, '""') + '"';
+    }
+
+    // Summary cards show totals across every client regardless of stage, so both phase
+    // tabs always display the same numbers no matter which one is active.
+    async function refreshSummary() {
+      try {
+        const res = await apiFetch('/clients');
+        if (!res.ok) return;
+        const all = await res.json();
+        const counts = {
+          total: all.length,
+          prospect: all.filter(c => c.status === 'Prospect').length,
+          active: all.filter(c => c.status === 'Active').length,
+          inactive: all.filter(c => c.status === 'Inactive').length
+        };
+        ['', '-phase2'].forEach(suffix => {
+          const totalEl = document.getElementById(`summary-total${suffix}`);
+          const prospectEl = document.getElementById(`summary-prospect${suffix}`);
+          const activeEl = document.getElementById(`summary-active${suffix}`);
+          const inactiveEl = document.getElementById(`summary-inactive${suffix}`);
+          if (totalEl) totalEl.textContent = counts.total;
+          if (prospectEl) prospectEl.textContent = counts.prospect;
+          if (activeEl) activeEl.textContent = counts.active;
+          if (inactiveEl) inactiveEl.textContent = counts.inactive;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Client administration tab: a flat grid of every Inactive client regardless of stage,
+    // so clients soft-deleted from either phase (and otherwise invisible in both directories) are still reachable.
+    const adminClientsGrid = document.getElementById('admin-clients-grid');
+    const adminSearchInput = document.getElementById('admin-search');
+    let inactiveClients = [];
+
+    function filterInactiveClients() {
+      const query = adminSearchInput.value.trim().toLowerCase();
+      if (!query) return inactiveClients;
+      return inactiveClients.filter(c =>
+        (c.contact_name || '').toLowerCase().includes(query) || (c.phone || '').toLowerCase().includes(query)
+      );
+    }
+
+    async function loadInactiveClients() {
+      try {
+        const res = await apiFetch('/clients?status=Inactive');
+        if (!res.ok) throw new Error('Failed to load inactive clients');
+        inactiveClients = await res.json();
+        renderAdminGrid(filterInactiveClients());
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    adminSearchInput.addEventListener('input', () => renderAdminGrid(filterInactiveClients()));
+
+    function renderAdminGrid(clients) {
+      adminClientsGrid.innerHTML = '';
+      if (!clients.length) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.colSpan = 6;
+        cell.style.color = '#6b7280';
+        cell.style.whiteSpace = 'normal';
+        cell.textContent = t('admin.empty');
+        row.appendChild(cell);
+        adminClientsGrid.appendChild(row);
+        return;
+      }
+      clients.forEach(client => {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = client.contact_name || '–';
+
+        const companyCell = document.createElement('td');
+        companyCell.textContent = client.company_name || '–';
+
+        const emailCell = document.createElement('td');
+        emailCell.textContent = client.email || '–';
+
+        const phoneCell = document.createElement('td');
+        phoneCell.textContent = client.phone || '–';
+
+        const stageCell = document.createElement('td');
+        stageCell.textContent = client.stage === 'phase2' ? t('nav.phase2') : t('nav.phase1');
+
+        const actionCell = document.createElement('td');
+        const reactivateButton = document.createElement('button');
+        reactivateButton.className = 'button primary';
+        reactivateButton.type = 'button';
+        reactivateButton.textContent = t('admin.reactivate');
+        reactivateButton.addEventListener('click', () => reactivateClient(client.id, client.contact_name));
+        actionCell.appendChild(reactivateButton);
+
+        row.append(nameCell, companyCell, emailCell, phoneCell, stageCell, actionCell);
+        adminClientsGrid.appendChild(row);
+      });
+    }
+
+    function reactivateClient(id, name) {
+      const confirmed = window.confirm(t('admin.confirmReactivate').replace('{name}', name));
+      if (!confirmed) return;
+      (async () => {
+        try {
+          const res = await apiFetch(`/clients/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'Prospect', stage: 'phase1' })
+          });
+          if (!res.ok) throw new Error('Failed to reactivate client');
+          await loadInactiveClients();
+          await phase1.loadClients();
+          refreshSummary();
+        } catch (err) {
+          console.error(err);
+          alert(t('admin.reactivateFailed'));
+        }
+      })();
+    }
+
+    // Builds a self-contained controller for one phase (Phase 1 or Phase 2), wired to its own
+    // set of DOM elements (given as an id map) so the two phases never share state.
+    function createPhaseController(stage, ids, options = {}) {
+      const el = {};
+      Object.keys(ids).forEach(key => { el[key] = document.getElementById(ids[key]); });
+
+      const state = { clients: [], selectedClientId: null, editingClientId: null, searchQuery: '', companies: [], editingCompanyId: null };
+
+      function resetAddClientForm() {
+        el.newClientContact.value = '';
+        el.newClientEmail.value = '';
+        el.newClientPhone.value = '';
+      }
+
+      function toggleAddClientForm(show) {
+        el.addClientForm.style.display = show ? 'grid' : 'none';
+        el.detailScroll.style.display = show ? 'none' : 'block';
+        if (el.editClientButton) el.editClientButton.style.display = show ? 'none' : 'inline-flex';
+        if (show) {
+          el.addClientForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      function createNewClient() {
+        const contact = el.newClientContact.value.trim();
+        if (!contact) {
+          alert(t('client.contactRequired'));
+          return;
+        }
+        const payload = {
+          contact_name: contact,
+          email: el.newClientEmail.value.trim() || 'unknown@example.com',
+          phone: el.newClientPhone.value.trim() || '-000-000-0000',
+          stage
+        };
+
+        (async () => {
+          try {
+            if (state.editingClientId !== null) {
+              const res = await apiFetch(`/clients/${state.editingClientId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              if (!res.ok) throw new Error('Failed to update');
+              state.editingClientId = null;
+              el.saveClientButton.textContent = t('client.save');
+            } else {
+              const res = await apiFetch('/clients', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              if (!res.ok) throw new Error('Failed to create');
+            }
+            await loadClients();
+            resetAddClientForm();
+            toggleAddClientForm(false);
+          } catch (err) {
+            console.error(err);
+            alert(t('client.saveFailed'));
+          }
+        })();
+      }
+
+      function renderClientRow(client) {
+        const row = document.createElement('li');
+        row.className = 'client-row';
+        row.dataset.id = client.id;
+
+        const contactName = client.contact_name || '–';
+        const companyEntry = document.createElement('div');
+        companyEntry.className = 'company-entry';
+        const avatar = document.createElement('div');
+        avatar.className = 'company-avatar';
+        avatar.textContent = initials(contactName);
+        const companyStrong = document.createElement('strong');
+        companyStrong.textContent = contactName;
+        companyEntry.append(avatar, companyStrong);
+
+        row.append(companyEntry);
+        row.addEventListener('click', () => selectClient(client.id));
+        return row;
+      }
+
+      function renderClientList() {
+        const query = state.searchQuery.trim().toLowerCase();
+        const filtered = query
+          ? state.clients.filter(c => (c.contact_name || '').toLowerCase().includes(query) || (c.phone || '').toLowerCase().includes(query))
+          : state.clients;
+        el.tableBody.innerHTML = '';
+        filtered.forEach(client => {
+          el.tableBody.appendChild(renderClientRow(client));
+        });
+        updateSelection();
+      }
+
+      function updateSelection() {
+        el.tableBody.querySelectorAll('.client-row').forEach(row => {
+          row.classList.toggle('selected', Number(row.dataset.id) === state.selectedClientId);
+        });
+      }
+
+      function renderNotes(notes) {
+        el.notesList.innerHTML = '';
+        if (notes.length === 0) {
+          const empty = document.createElement('p');
+          empty.style.color = '#6b7280';
+          empty.style.margin = '0';
+          empty.textContent = t('notes.empty');
+          el.notesList.appendChild(empty);
+          return;
+        }
+        notes.forEach(note => {
+          const item = document.createElement('div');
+          item.className = 'note-item';
+          const text = document.createElement('p');
+          text.textContent = note.text;
+          const meta = document.createElement('small');
+          const when = note.created_at ? new Date(note.created_at).toLocaleString('en-US') : '';
+          meta.textContent = `${note.author_name || t('notes.unknownAuthor')} · ${when}`;
+          item.append(text, meta);
+          el.notesList.appendChild(item);
+        });
+      }
+
+      function companyFieldRow(label, value) {
+        const row = document.createElement('div');
+        const span = document.createElement('span');
+        span.textContent = label;
+        const text = document.createElement('div');
+        text.textContent = value || '–';
+        row.append(span, text);
+        return row;
+      }
+
+      function renderCompanies(companies) {
+        el.companiesList.innerHTML = '';
+        if (!companies.length) {
+          const empty = document.createElement('p');
+          empty.style.color = '#6b7280';
+          empty.style.margin = '0';
+          empty.textContent = t('companies.empty');
+          el.companiesList.appendChild(empty);
+        } else {
+          companies.forEach(company => {
+            const card = document.createElement('div');
+            card.className = 'company-card';
+
+            const header = document.createElement('div');
+            header.className = 'company-card-header';
+            const name = document.createElement('strong');
+            name.textContent = company.name;
+            const editButton = document.createElement('button');
+            editButton.className = 'button neutral';
+            editButton.type = 'button';
+            editButton.textContent = t('common.editShort');
+            editButton.addEventListener('click', () => startEditCompany(company));
+            const removeButton = document.createElement('button');
+            removeButton.className = 'button danger';
+            removeButton.type = 'button';
+            removeButton.textContent = t('common.remove');
+            removeButton.addEventListener('click', () => cancelCompany(company.id, company.name));
+            const actions = document.createElement('div');
+            actions.style.display = 'flex';
+            actions.style.gap = '8px';
+            actions.append(editButton, removeButton);
+            header.append(name, actions);
+
+            const fields = document.createElement('div');
+            fields.className = 'company-fields';
+            fields.append(
+              companyFieldRow(t('companies.industry'), company.industry),
+              companyFieldRow(t('companies.region'), company.region),
+              companyFieldRow(t('companies.city'), company.city),
+              companyFieldRow(t('companies.country'), company.country),
+              companyFieldRow(t('companies.crLabel'), company.commercial_registration_number),
+              companyFieldRow(t('companies.vat'), company.vat_number),
+              companyFieldRow(t('companies.contactPersonLabel'), company.contact_person_name),
+              companyFieldRow(t('companies.additionalPhoneLabel'), company.additional_phone_number),
+              companyFieldRow(t('companies.address'), company.national_address)
+            );
+
+            card.append(header, fields);
+
+            if (company.briefing) {
+              const briefing = document.createElement('div');
+              briefing.className = 'briefing-block';
+              const label = document.createElement('span');
+              label.textContent = t('companies.briefingLabel');
+              const text = document.createElement('p');
+              text.textContent = company.briefing;
+              briefing.append(label, text);
+              card.append(briefing);
+            }
+
+            el.companiesList.appendChild(card);
+          });
+        }
+
+        // Only one company per client is allowed from the UI: hide the add form once one
+        // exists, unless the user is actively editing that company (handled explicitly there).
+        if (state.editingCompanyId === null) {
+          setCompanyFormVisible(companies.length === 0);
+        }
+      }
+
+      // Mirrors toggleAddClientForm: the form and the read-only list are mutually exclusive,
+      // same takeover pattern used for editing a client.
+      function setCompanyFormVisible(visible) {
+        el.companyFormSection.style.display = visible ? 'block' : 'none';
+        el.companiesList.style.display = visible ? 'none' : 'flex';
+      }
+
+      function resetAddCompanyForm() {
+        el.newCompanyName.value = '';
+        el.newCompanyRegion.value = '';
+        el.newCompanyCity.value = '';
+        el.newCompanyCountry.value = '';
+        el.newCompanyCr.value = '';
+        el.newCompanyVat.value = '';
+        el.newCompanyAddress.value = '';
+        el.newCompanyIndustry.value = '';
+        el.newCompanyBriefing.value = '';
+        el.newCompanyContactPerson.value = '';
+        el.newCompanyAdditionalPhone.value = '';
+      }
+
+      function startEditCompany(company) {
+        el.newCompanyName.value = company.name || '';
+        el.newCompanyRegion.value = company.region || '';
+        el.newCompanyCity.value = company.city || '';
+        el.newCompanyCountry.value = company.country || '';
+        el.newCompanyCr.value = company.commercial_registration_number || '';
+        el.newCompanyVat.value = company.vat_number || '';
+        el.newCompanyAddress.value = company.national_address || '';
+        el.newCompanyIndustry.value = company.industry || '';
+        el.newCompanyBriefing.value = company.briefing || '';
+        el.newCompanyContactPerson.value = company.contact_person_name || '';
+        el.newCompanyAdditionalPhone.value = company.additional_phone_number || '';
+        state.editingCompanyId = company.id;
+        el.addCompanyButton.textContent = t('common.saveChanges');
+        setCompanyFormVisible(true);
+        el.companyFormSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function resetDetailPanel() {
+        el.detailAvatar.textContent = '–';
+        el.detailName.textContent = t('details.selectClient');
+        el.detailContact.textContent = '–';
+        el.detailEmail.textContent = '–';
+        el.detailPhone.textContent = '–';
+        state.companies = [];
+        state.editingCompanyId = null;
+        el.addCompanyButton.textContent = t('companies.add');
+        resetAddCompanyForm();
+        renderNotes([]);
+        renderCompanies([]);
+        el.pipelineCard.style.display = 'none';
+      }
+
+      function selectClient(id) {
+        state.selectedClientId = id;
+        updateSelection();
+        return (async () => {
+          try {
+            const res = await apiFetch(`/clients/${id}`);
+            if (!res.ok) return;
+            const { client, notes, companies } = await res.json();
+            el.detailAvatar.textContent = initials(client.contact_name);
+            el.detailName.textContent = client.contact_name;
+            el.detailContact.textContent = client.contact_name || '–';
+            el.detailEmail.textContent = client.email || '–';
+            el.detailPhone.textContent = client.phone || '–';
+            renderNotes(notes || []);
+            state.companies = companies || [];
+            renderCompanies(state.companies);
+            el.pipelineCard.style.display = client.status === 'Inactive' ? 'none' : 'grid';
+          } catch (err) {
+            console.error(err);
+          }
+        })();
+      }
+
+      function cancelCompany(companyId, name) {
+        const confirmed = window.confirm(t('companies.confirmRemove').replace('{name}', name));
+        if (!confirmed) return;
+        (async () => {
+          try {
+            const res = await apiFetch(`/companies/${companyId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to remove company');
+            if (state.selectedClientId !== null) await selectClient(state.selectedClientId);
+          } catch (err) {
+            console.error(err);
+            alert(t('companies.removeFailed'));
+          }
+        })();
+      }
+
+      function cancelClient(id, name) {
+        const confirmed = window.confirm(t('client.confirmCancel').replace('{name}', name));
+        if (!confirmed) return;
+        (async () => {
+          try {
+            const res = await apiFetch(`/clients/${id}`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'Inactive' })
+            });
+            if (!res.ok) throw new Error('Failed to update client');
+            await loadClients();
+            await loadInactiveClients();
+            const stillPresent = state.clients.some(c => c.id === id);
+            if (!stillPresent && state.selectedClientId === id) {
+              state.selectedClientId = null;
+              if (state.clients.length) {
+                state.selectedClientId = state.clients[0].id;
+                await selectClient(state.selectedClientId);
+              } else {
+                resetDetailPanel();
+              }
+            } else if (stillPresent && state.selectedClientId === id) {
+              await selectClient(id);
+            }
+          } catch (err) {
+            console.error(err);
+            alert(t('client.updateFailed'));
+          }
+        })();
+      }
+
+      function handleImportFile(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const rows = parseCsvRows(reader.result || '');
+          if (rows.length < 2) {
+            alert(t('csv.emptyFile'));
+            el.importFileInput.value = '';
+            return;
+          }
+
+          const headerRow = rows.shift().map(header => header.toLowerCase());
+          const expected = ['contact', 'email', 'phone', 'status', 'engagements'];
+          const missing = expected.filter(key => !headerRow.includes(key));
+          if (missing.length) {
+            alert(t('csv.missingColumns').replace('{columns}', expected.join(', ')));
+            el.importFileInput.value = '';
+            return;
+          }
+
+          const imported = rows.map(row => {
+            const record = Object.fromEntries(headerRow.map((key, index) => [key, row[index] || '']));
+            return {
+              contact_name: record.contact || 'Unknown contact',
+              email: record.email || 'unknown@example.com',
+              phone: record.phone || '-000-000-0000',
+              status: ['Prospect', 'Active', 'Inactive'].includes(record.status) ? record.status : 'Prospect',
+              stage
+            };
+          });
+
+          if (!imported.length) {
+            alert(t('csv.noneImported'));
+            el.importFileInput.value = '';
+            return;
+          }
+          (async () => {
+            try {
+              for (const rec of imported) {
+                const res = await apiFetch('/clients', {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(rec)
+                });
+                if (!res.ok) console.warn('Failed to import row', rec);
+              }
+              await loadClients();
+              if (state.clients.length) selectClient(state.clients[0].id);
+            } catch (err) {
+              console.error(err);
+              alert(t('csv.importFailed'));
+            } finally {
+              el.importFileInput.value = '';
+            }
+          })();
+        };
+
+        reader.readAsText(file);
+      }
+
+      function clientsListPath() {
+        return `/clients?stage=${stage}` + (options.listStatusFilter ? `&status=${options.listStatusFilter}` : '');
+      }
+
+      function exportClientsCsv() {
+        (async () => {
+          try {
+            const res = await apiFetch(clientsListPath());
+            if (!res.ok) throw new Error('Failed to fetch clients');
+            const data = await res.json();
+            const headers = ['contact','email','phone','status','engagements'];
+            const rows = data.map(c => [
+              escapeCsvCell(c.contact_name || ''),
+              escapeCsvCell(c.email || ''),
+              escapeCsvCell(c.phone || ''),
+              escapeCsvCell(c.status || ''),
+              escapeCsvCell(c.engagements_count || 0)
+            ].join(','));
+            const csv = headers.join(',') + '\n' + rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'clients.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error(err);
+            alert(t('csv.exportFailed'));
+          }
+        })();
+      }
+
+      async function loadClients() {
+        try {
+          const res = await apiFetch(clientsListPath());
+          if (!res.ok) throw new Error('Failed to load clients');
+          state.clients = await res.json();
+          refreshSummary();
+          renderClientList();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      if (el.importButton) el.importButton.addEventListener('click', () => el.importFileInput.click());
+      if (el.importFileInput) el.importFileInput.addEventListener('change', handleImportFile);
+      if (el.exportButton) el.exportButton.addEventListener('click', exportClientsCsv);
+      if (el.addClientButton) {
+        el.addClientButton.addEventListener('click', () => {
+          state.editingClientId = null;
+          resetAddClientForm();
+          el.saveClientButton.textContent = t('client.save');
+          if (el.formTitle) el.formTitle.textContent = t('client.addTitle');
+          toggleAddClientForm(true);
+        });
+      }
+      el.cancelClientButton.addEventListener('click', () => {
+        resetAddClientForm();
+        state.editingClientId = null;
+        el.saveClientButton.textContent = t('client.save');
+        toggleAddClientForm(false);
+      });
+      el.saveClientButton.addEventListener('click', createNewClient);
+      if (el.editClientButton) {
+        el.editClientButton.addEventListener('click', () => {
+          const client = state.clients.find(c => c.id === state.selectedClientId);
+          if (!client) {
+            alert(t('client.noneSelectedEdit'));
+            return;
+          }
+          el.newClientContact.value = client.contact_name;
+          el.newClientEmail.value = client.email;
+          el.newClientPhone.value = client.phone;
+          state.editingClientId = client.id;
+          el.saveClientButton.textContent = t('common.saveChanges');
+          if (el.formTitle) el.formTitle.textContent = t('client.editTitle');
+          toggleAddClientForm(true);
+        });
+      }
+      el.deleteClientButton.addEventListener('click', () => {
+        const client = state.clients.find(c => c.id === state.selectedClientId);
+        if (!client) {
+          alert(t('client.noneSelected'));
+          return;
+        }
+        cancelClient(client.id, client.contact_name);
+      });
+
+      el.searchInput.addEventListener('input', () => {
+        state.searchQuery = el.searchInput.value;
+        renderClientList();
+      });
+
+      el.addNoteButton.addEventListener('click', () => {
+        const value = el.newNoteInput.value.trim();
+        if (!value) return;
+        if (state.selectedClientId === null) {
+          alert(t('common.selectClientFirst'));
+          return;
+        }
+        (async () => {
+          try {
+            let currentUser = null;
+            try {
+              currentUser = JSON.parse(localStorage.getItem('authUser') || 'null');
+            } catch (parseErr) {
+              currentUser = null;
+            }
+            const res = await apiFetch(`/clients/${state.selectedClientId}/notes`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                author_id: currentUser ? currentUser.id : null,
+                author_name: currentUser && currentUser.name ? currentUser.name : 'Unknown user',
+                text: value
+              })
+            });
+            if (!res.ok) throw new Error('Failed to add note');
+            el.newNoteInput.value = '';
+            await selectClient(state.selectedClientId);
+          } catch (err) {
+            console.error(err);
+            alert(t('notes.addFailed'));
+          }
+        })();
+      });
+
+      el.addCompanyButton.addEventListener('click', () => {
+        const name = el.newCompanyName.value.trim();
+        if (!name) {
+          alert(t('companies.nameRequired'));
+          return;
+        }
+        if (state.selectedClientId === null) {
+          alert(t('common.selectClientFirst'));
+          return;
+        }
+        const payload = {
+          name,
+          region: el.newCompanyRegion.value.trim(),
+          city: el.newCompanyCity.value.trim(),
+          country: el.newCompanyCountry.value.trim(),
+          commercial_registration_number: el.newCompanyCr.value.trim(),
+          vat_number: el.newCompanyVat.value.trim(),
+          national_address: el.newCompanyAddress.value.trim(),
+          industry: el.newCompanyIndustry.value,
+          briefing: el.newCompanyBriefing.value.trim(),
+          contact_person_name: el.newCompanyContactPerson.value.trim(),
+          additional_phone_number: el.newCompanyAdditionalPhone.value.trim()
+        };
+        const editingId = state.editingCompanyId;
+        (async () => {
+          try {
+            const res = editingId !== null
+              ? await apiFetch(`/companies/${editingId}`, {
+                  method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                })
+              : await apiFetch(`/clients/${state.selectedClientId}/companies`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+            if (!res.ok) throw new Error('Failed to save company');
+            state.editingCompanyId = null;
+            el.addCompanyButton.textContent = t('companies.add');
+            resetAddCompanyForm();
+            await selectClient(state.selectedClientId);
+          } catch (err) {
+            console.error(err);
+            alert(t('companies.saveFailed'));
+          }
+        })();
+      });
+
+      el.cancelCompanyButton.addEventListener('click', () => {
+        resetAddCompanyForm();
+        state.editingCompanyId = null;
+        el.addCompanyButton.textContent = t('companies.add');
+        setCompanyFormVisible(state.companies.length === 0);
+      });
+
+      el.pipelineButton.addEventListener('click', () => {
+        if (state.selectedClientId === null) {
+          alert(t('common.selectClientFirst'));
+          return;
+        }
+        const id = state.selectedClientId;
+        (async () => {
+          try {
+            const res = await apiFetch(`/clients/${id}/engagements`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: 'New engagement', description: 'Created from UI' })
+            });
+            if (!res.ok) throw new Error('Failed to create engagement');
+
+            if (options.graduateTo) {
+              await apiFetch(`/clients/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stage: options.graduateTo.stage, status: 'Active' })
+              });
+              if (state.selectedClientId === id) state.selectedClientId = null;
+              await loadClients();
+              if (state.selectedClientId === null) {
+                if (state.clients.length) {
+                  state.selectedClientId = state.clients[0].id;
+                  await selectClient(state.selectedClientId);
+                } else {
+                  resetDetailPanel();
+                }
+              }
+              await options.graduateTo.loadClients();
+              activateTab(options.graduateTo.stage);
+              await options.graduateTo.selectClient(id);
+            } else {
+              await selectClient(id);
+              await loadClients();
+            }
+          } catch (err) {
+            console.error(err);
+            alert(t('pipeline.createFailed'));
+          }
+        })();
+      });
+
+      // Re-applies the current language to whatever this phase's panel is showing right now:
+      // the dynamic Save/Edit button labels, plus the selected client's companies/notes (or the
+      // empty-state panel if nothing is selected) — none of which carry data-i18n attributes.
+      function refreshLanguage() {
+        el.saveClientButton.textContent = state.editingClientId !== null ? t('common.saveChanges') : t('client.save');
+        if (el.formTitle) {
+          el.formTitle.textContent = state.editingClientId !== null ? t('client.editTitle') : t('client.addTitle');
+        }
+        el.addCompanyButton.textContent = state.editingCompanyId !== null ? t('common.saveChanges') : t('companies.add');
+        if (state.selectedClientId !== null) {
+          selectClient(state.selectedClientId);
+        } else {
+          resetDetailPanel();
+        }
+      }
+
+      return { stage, loadClients, selectClient, cancelClient, resetDetailPanel, refreshLanguage, state };
+    }
+
+    const phase2 = createPhaseController('phase2', {
+      tableBody: 'client-table-body-phase2',
+      searchInput: 'client-search-phase2',
+      notesList: 'notes-list-phase2',
+      newNoteInput: 'new-note-phase2',
+      addNoteButton: 'add-note-button-phase2',
+      companiesList: 'companies-list-phase2',
+      newCompanyName: 'new-company-name-phase2',
+      newCompanyRegion: 'new-company-region-phase2',
+      newCompanyCity: 'new-company-city-phase2',
+      newCompanyCountry: 'new-company-country-phase2',
+      newCompanyCr: 'new-company-cr-phase2',
+      newCompanyVat: 'new-company-vat-phase2',
+      newCompanyAddress: 'new-company-address-phase2',
+      newCompanyIndustry: 'new-company-industry-phase2',
+      newCompanyBriefing: 'new-company-briefing-phase2',
+      newCompanyContactPerson: 'new-company-contact-person-phase2',
+      newCompanyAdditionalPhone: 'new-company-additional-phone-phase2',
+      companyFormSection: 'company-form-section-phase2',
+      addCompanyButton: 'add-company-button-phase2',
+      cancelCompanyButton: 'cancel-company-button-phase2',
+      pipelineCard: 'pipeline-card-phase2',
+      pipelineButton: 'pipeline-button-phase2',
+      addClientForm: 'add-client-form-phase2',
+      formTitle: 'add-client-form-title-phase2',
+      detailScroll: 'detail-scroll-phase2',
+      saveClientButton: 'save-client-button-phase2',
+      cancelClientButton: 'cancel-client-button-phase2',
+      newClientContact: 'new-client-contact-phase2',
+      newClientEmail: 'new-client-email-phase2',
+      newClientPhone: 'new-client-phone-phase2',
+      deleteClientButton: 'delete-client-button-phase2',
+      detailAvatar: 'detail-avatar-phase2',
+      detailName: 'detail-name-phase2',
+      detailContact: 'detail-contact-phase2',
+      detailEmail: 'detail-email-phase2',
+      detailPhone: 'detail-phone-phase2'
+    }, { listStatusFilter: 'Active' });
+
+    const phase1 = createPhaseController('phase1', {
+      tableBody: 'client-table-body',
+      searchInput: 'client-search',
+      notesList: 'notes-list',
+      newNoteInput: 'new-note',
+      addNoteButton: 'add-note-button',
+      companiesList: 'companies-list',
+      newCompanyName: 'new-company-name',
+      newCompanyRegion: 'new-company-region',
+      newCompanyCity: 'new-company-city',
+      newCompanyCountry: 'new-company-country',
+      newCompanyCr: 'new-company-cr',
+      newCompanyVat: 'new-company-vat',
+      newCompanyAddress: 'new-company-address',
+      newCompanyIndustry: 'new-company-industry',
+      newCompanyBriefing: 'new-company-briefing',
+      newCompanyContactPerson: 'new-company-contact-person',
+      newCompanyAdditionalPhone: 'new-company-additional-phone',
+      companyFormSection: 'company-form-section',
+      addCompanyButton: 'add-company-button',
+      cancelCompanyButton: 'cancel-company-button',
+      pipelineCard: 'pipeline-card',
+      pipelineButton: 'pipeline-button',
+      importButton: 'import-button',
+      importFileInput: 'import-file',
+      exportButton: 'export-button',
+      addClientButton: 'add-client-button',
+      addClientForm: 'add-client-form',
+      formTitle: 'add-client-form-title',
+      detailScroll: 'detail-scroll',
+      saveClientButton: 'save-client-button',
+      cancelClientButton: 'cancel-client-button',
+      newClientContact: 'new-client-contact',
+      newClientEmail: 'new-client-email',
+      newClientPhone: 'new-client-phone',
+      editClientButton: 'edit-client-button',
+      deleteClientButton: 'delete-client-button',
+      detailAvatar: 'detail-avatar',
+      detailName: 'detail-name',
+      detailContact: 'detail-contact',
+      detailEmail: 'detail-email',
+      detailPhone: 'detail-phone'
+    }, { graduateTo: phase2, listStatusFilter: 'Prospect' });
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authUser');
+      window.location.href = 'Login.html';
+    });
+
+    document.getElementById('lang-toggle').addEventListener('click', () => {
+      applyLanguage(currentLanguage === 'en' ? 'ar' : 'en');
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!requireAuth()) return;
+      applyLanguage(currentLanguage);
+      renderUserGreeting();
+      await phase1.loadClients();
+      if (phase1.state.clients.length) {
+        await phase1.selectClient(phase1.state.clients[0].id);
+      } else {
+        phase1.resetDetailPanel();
+      }
+      await phase2.loadClients();
+      if (phase2.state.clients.length) {
+        await phase2.selectClient(phase2.state.clients[0].id);
+      } else {
+        phase2.resetDetailPanel();
+      }
+      await loadInactiveClients();
+    });
+  </script>
+</body>
+</html>
