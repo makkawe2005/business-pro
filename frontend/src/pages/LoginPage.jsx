@@ -9,12 +9,12 @@ export function LoginPage() {
   const token = useAuthStore((s) => s.token);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
-  const { t, toggleLanguage, nextLangLabel, translateServerError } = useI18n();
+  const { t, toggleLanguage, nextLangLabel, nextLangCode, translateServerError } = useI18n();
 
-  const [mode, setMode] = useState('login');
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -33,31 +33,10 @@ export function LoginPage() {
     setError(null);
 
     try {
-      if (mode === 'register') {
-        const trimmedName = name.trim();
-        if (!trimmedName) {
-          showError(t('auth.nameRequired'));
-          return;
-        }
-        const res = await fetch(`${API_BASE}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmedName, email: trimmedEmail, password })
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          showError(body.error ? translateServerError(body.error) : t('auth.createFailed'));
-          return;
-        }
-        setMode('login');
-        showError(t('auth.accountCreated'), 'var(--bp-success)');
-        return;
-      }
-
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail, password })
+        body: JSON.stringify({ email: trimmedEmail, password, remember })
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -75,8 +54,6 @@ export function LoginPage() {
     }
   }
 
-  const isRegister = mode === 'register';
-
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
@@ -85,31 +62,23 @@ export function LoginPage() {
             <img className="brand-mark" src={logo} alt="Business Pro" />
             <span>Business Pro</span>
           </div>
-          <button type="button" className="login-lang-toggle" onClick={toggleLanguage}>
-            {nextLangLabel}
+          <button
+            type="button"
+            className="login-lang-toggle"
+            onClick={toggleLanguage}
+            title={nextLangLabel}
+            aria-label={nextLangLabel}
+          >
+            🌐 {nextLangCode}
           </button>
         </div>
 
         <div>
-          <h1>{isRegister ? t('auth.createTitle') : t('auth.signInTitle')}</h1>
-          <p className="subtitle">{isRegister ? t('auth.createSubtitle') : t('auth.signInSubtitle')}</p>
+          <h1>{t('auth.signInTitle')}</h1>
+          <p className="subtitle">{t('auth.signInSubtitle')}</p>
         </div>
 
         {error && <p className="error-message" style={{ color: error.color, display: 'block' }}>{error.message}</p>}
-
-        {isRegister && (
-          <div className="field-row">
-            <label htmlFor="name-input">{t('auth.nameLabel')}</label>
-            <input
-              id="name-input"
-              type="text"
-              placeholder={t('auth.namePlaceholder')}
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-        )}
 
         <div className="field-row">
           <label htmlFor="email-input">{t('auth.emailLabel')}</label>
@@ -127,27 +96,36 @@ export function LoginPage() {
 
         <div className="field-row">
           <label htmlFor="password-input">{t('auth.passwordLabel')}</label>
-          <input
-            id="password-input"
-            type="password"
-            placeholder={t('auth.passwordPlaceholder')}
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="password-input-wrapper">
+            <input
+              id="password-input"
+              type={showPassword ? 'text' : 'password'}
+              placeholder={t('auth.passwordPlaceholder')}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword((v) => !v)}
+              title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+            >
+              {showPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
         </div>
+
+        <label className="remember-me-row">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          <span>{t('auth.rememberMe')}</span>
+        </label>
 
         <button className="button primary" type="submit" disabled={submitting}>
-          {isRegister ? t('auth.createTitle') : t('auth.signInTitle')}
+          {t('auth.signInTitle')}
         </button>
-
-        <div className="toggle-row">
-          <span>{isRegister ? t('auth.haveAccount') : t('auth.needAccount')}</span>{' '}
-          <button type="button" onClick={() => setMode(isRegister ? 'login' : 'register')}>
-            {isRegister ? t('auth.signInTitle') : t('auth.createOne')}
-          </button>
-        </div>
       </form>
     </div>
   );

@@ -35,6 +35,8 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
   const [title, setTitle] = useState('');
   const [agenda, setAgenda] = useState('');
   const [meetingType, setMeetingType] = useState('Remote');
+  const [location, setLocation] = useState('');
+  const [meetingLink, setMeetingLink] = useState('');
 
   function submit() {
     const trimmedScheduledAt = scheduledAt.trim();
@@ -48,11 +50,13 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
       showToast(t('appointments.invalidDateFormat'), 'error');
       return;
     }
-    onAdd(`${trimmedScheduledAt}T00:00`, trimmedTitle, agenda.trim(), meetingType);
+    onAdd(`${trimmedScheduledAt}T00:00`, trimmedTitle, agenda.trim(), meetingType, location.trim(), meetingLink.trim());
     setScheduledAt('');
     setTitle('');
     setAgenda('');
     setMeetingType('Remote');
+    setLocation('');
+    setMeetingLink('');
   }
 
   return (
@@ -66,6 +70,13 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
             return (
               <div className="note-item" key={appt.id}>
                 <p><strong>{appt.title}</strong> — {when} · {t(statusKeys[appt.status] || 'appointments.statusScheduled')} · {t(meetingTypeKeys[appt.meeting_type] || 'appointments.meetingTypeRemote')}</p>
+                {appt.meeting_type === 'In-Person' && appt.location && <p>{t('appointments.locationLabel')}: {appt.location}</p>}
+                {appt.meeting_type === 'Remote' && appt.meeting_link && (
+                  <p>
+                    {t('appointments.meetingLinkLabel')}:{' '}
+                    <a href={appt.meeting_link} target="_blank" rel="noopener noreferrer">{appt.meeting_link}</a>
+                  </p>
+                )}
                 {appt.agenda && <p>{appt.agenda}</p>}
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {appt.status === 'Scheduled' && (
@@ -107,6 +118,24 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
             <option value="In-Person">{t('appointments.meetingTypeInPerson')}</option>
           </select>
         </div>
+        {meetingType === 'In-Person' ? (
+          <input
+            type="text"
+            placeholder={t('appointments.locationPlaceholder')}
+            style={{ gridColumn: '1 / -1' }}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+        ) : (
+          <input
+            type="text"
+            dir="ltr"
+            placeholder={t('appointments.meetingLinkPlaceholder')}
+            style={{ gridColumn: '1 / -1' }}
+            value={meetingLink}
+            onChange={(e) => setMeetingLink(e.target.value)}
+          />
+        )}
         <textarea
           placeholder={t('appointments.agendaPlaceholder')}
           rows={3}

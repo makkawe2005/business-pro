@@ -113,6 +113,19 @@ export function CalendarPage() {
                   <div className="calendar-appt-main">
                     <div className="client">{appt.contact_name}</div>
                     <div className="title">{appt.title}</div>
+                    {appt.meeting_type === 'In-Person' && appt.location && (
+                      <div className="location">{appt.location}</div>
+                    )}
+                    {appt.meeting_type === 'Remote' && appt.meeting_link && (
+                      <a
+                        className="calendar-join-link"
+                        href={appt.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('calendar.joinMeeting')}
+                      </a>
+                    )}
                   </div>
                   <span className={`calendar-meeting-pill ${appt.meeting_type === 'In-Person' ? 'in-person' : 'remote'}`}>
                     {appt.meeting_type === 'In-Person' ? t('appointments.meetingTypeInPerson') : t('appointments.meetingTypeRemote')}

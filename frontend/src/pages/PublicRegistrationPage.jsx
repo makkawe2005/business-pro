@@ -16,7 +16,7 @@ const emptyForm = {
 };
 
 export function PublicRegistrationPage() {
-  const { t, toggleLanguage, nextLangLabel } = useI18n();
+  const { t, toggleLanguage, nextLangLabel, nextLangCode } = useI18n();
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -68,8 +68,14 @@ export function PublicRegistrationPage() {
             <img className="brand-mark" src={logo} alt="Business Pro" />
             <span>Business Pro</span>
           </div>
-          <button type="button" className="login-lang-toggle" onClick={toggleLanguage}>
-            {nextLangLabel}
+          <button
+            type="button"
+            className="login-lang-toggle"
+            onClick={toggleLanguage}
+            title={nextLangLabel}
+            aria-label={nextLangLabel}
+          >
+            🌐 {nextLangCode}
           </button>
         </div>
 

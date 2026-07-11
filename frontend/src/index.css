@@ -114,6 +114,26 @@ body {
   flex-wrap: wrap;
 }
 
+.icon-button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.hamburger-button {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-inline-end: 4px;
+}
+
 .user-greeting {
   color: rgba(255, 255, 255, 0.85);
   font-size: 0.85rem;
@@ -883,6 +903,41 @@ body {
   cursor: pointer;
 }
 
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-inline-end: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  inset-inline-end: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 4px;
+}
+
+.remember-me-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  color: var(--bp-body);
+  cursor: pointer;
+}
+
+.remember-me-row input {
+  width: auto;
+}
+
 .login-brand span {
   font-size: 0.72rem;
   color: var(--bp-muted);
@@ -1131,6 +1186,20 @@ body {
   margin-top: 1px;
 }
 
+.calendar-appt-main .location {
+  font-size: 0.78rem;
+  color: var(--bp-muted);
+  margin-top: 2px;
+}
+
+.calendar-join-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--bp-navy);
+  margin-top: 2px;
+  display: inline-block;
+}
+
 .calendar-meeting-pill {
   font-size: 0.72rem;
   font-weight: 600;
@@ -1243,6 +1312,35 @@ body {
   .company-form-grid,
   .company-fields {
     grid-template-columns: 1fr;
+  }
+
+  .hamburger-button {
+    display: inline-flex;
+  }
+
+  .tabs {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--bp-border);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    margin-bottom: 18px;
+  }
+
+  .tabs.open {
+    display: flex;
+  }
+
+  .tabs .tab-button {
+    padding: 10px 12px;
+    border-bottom: none;
+    border-radius: var(--radius-sm);
+  }
+
+  .tabs .tab-button.active {
+    background: var(--bp-navy);
+    color: #ffffff;
   }
 }
 

@@ -301,7 +301,7 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
     }
   }
 
-  async function handleAddAppointment(scheduledAtLocal, title, agenda, meetingType) {
+  async function handleAddAppointment(scheduledAtLocal, title, agenda, meetingType, location, meetingLink) {
     if (selectedClientId === null) {
       showToast(t('common.selectClientFirst'), 'error');
       return;
@@ -317,7 +317,9 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
           scheduled_at: new Date(scheduledAtLocal).toISOString(),
           title,
           agenda,
-          meeting_type: meetingType
+          meeting_type: meetingType,
+          location,
+          meeting_link: meetingLink
         })
       });
       if (!res.ok) throw new Error('Failed to add appointment');

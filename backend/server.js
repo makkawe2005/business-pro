@@ -36,27 +36,8 @@ if (!JWT_SECRET) {
 }
 
 // Auth endpoints
-app.post('/auth/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ error: 'name, email and password required' });
-  if (password.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
-  try {
-    const { rows: existing } = await db.query('SELECT id FROM users WHERE LOWER(email) = LOWER($1)', [email]);
-    if (existing[0]) return res.status(409).json({ error: 'Email already registered' });
-    const password_hash = await bcrypt.hash(password, 10);
-    const { rows } = await db.query(
-      'INSERT INTO users (name, email, password_hash) VALUES ($1,$2,$3) RETURNING id, name, email',
-      [name, email, password_hash]
-    );
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to register user' });
-  }
-});
-
 app.post('/auth/login', loginLimiter, async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, remember } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
   try {
     const { rows } = await db.query(
@@ -70,7 +51,11 @@ app.post('/auth/login', loginLimiter, async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Invalid email or password' });
     if (!user.is_active) return res.status(403).json({ error: 'Account is deactivated' });
-    const token = jwt.sign({ sub: user.id, email: user.email, role_id: user.role_id }, JWT_SECRET, { expiresIn: '12h' });
+    const token = jwt.sign(
+      { sub: user.id, email: user.email, role_id: user.role_id },
+      JWT_SECRET,
+      { expiresIn: remember ? '30d' : '12h' }
+    );
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, role_id: user.role_id, role: user.role_name } });
   } catch (err) {
     console.error(err);
@@ -484,7 +469,7 @@ app.get('/appointments', requirePage('calendar'), async (req, res) => {
     }
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const { rows } = await db.query(
-      `SELECT a.id, a.scheduled_at, a.title, a.agenda, a.status, a.meeting_type,
+      `SELECT a.id, a.scheduled_at, a.title, a.agenda, a.status, a.meeting_type, a.location, a.meeting_link,
               c.id AS client_id, c.contact_name, c.stage
        FROM appointments a
        JOIN clients c ON c.id = a.client_id
@@ -501,12 +486,15 @@ app.get('/appointments', requirePage('calendar'), async (req, res) => {
 
 app.post('/clients/:id/appointments', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const clientId = Number(req.params.id);
-  const { scheduled_at, title, agenda, created_by, meeting_type } = req.body;
+  const { scheduled_at, title, agenda, created_by, meeting_type, location, meeting_link } = req.body;
   if (!scheduled_at || !title) return res.status(400).json({ error: 'scheduled_at and title required' });
   try {
-    const q = `INSERT INTO appointments (client_id, scheduled_at, title, agenda, created_by, meeting_type)
-               VALUES ($1,$2,$3,$4,$5,COALESCE($6,'Remote')) RETURNING *`;
-    const { rows } = await db.query(q, [clientId, scheduled_at, title, agenda || null, created_by || null, meeting_type || null]);
+    const q = `INSERT INTO appointments (client_id, scheduled_at, title, agenda, created_by, meeting_type, location, meeting_link)
+               VALUES ($1,$2,$3,$4,$5,COALESCE($6,'Remote'),$7,$8) RETURNING *`;
+    const { rows } = await db.query(q, [
+      clientId, scheduled_at, title, agenda || null, created_by || null, meeting_type || null,
+      location || null, meeting_link || null
+    ]);
     res.status(201).json(rows[0]);
   } catch (err) {
     console.error(err);
@@ -516,7 +504,7 @@ app.post('/clients/:id/appointments', requireClientPhase(resolveClientIdDirect),
 
 app.put('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment), async (req, res) => {
   const id = Number(req.params.id);
-  const fields = ['scheduled_at', 'title', 'agenda', 'status', 'meeting_type'];
+  const fields = ['scheduled_at', 'title', 'agenda', 'status', 'meeting_type', 'location', 'meeting_link'];
   const sets = [];
   const values = [];
   let idx = 1;

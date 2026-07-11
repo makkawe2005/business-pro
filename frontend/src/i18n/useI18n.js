@@ -17,6 +17,7 @@ export function useI18n() {
   }, [lang]);
 
   const nextLangLabel = lang === 'en' ? 'العربية' : 'English';
+  const nextLangCode = lang === 'en' ? 'AR' : 'EN';
 
-  return { t, lang, toggleLanguage: toggle, translateServerError, nextLangLabel };
+  return { t, lang, toggleLanguage: toggle, translateServerError, nextLangLabel, nextLangCode };
 }

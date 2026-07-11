@@ -62,11 +62,11 @@ Appointments
   - Requires `calendar` page access (added in migration 019, granted to every existing role by default — independent of `phase1`, same pattern as `dashboard`, even though appointments only exist in Client Relation today). Cross-client listing — powers the Calendar page. Query params: `from`/`to` (optional, `YYYY-MM-DD`, inclusive on both ends, filters on `scheduled_at`'s date) and `status` (optional, comma-separated `appointment_status` values, e.g. `status=Scheduled`). Returns every matching appointment across all clients, each with `client_id`, `contact_name`, and `stage` attached, sorted by `scheduled_at` ascending.
 
 - POST /clients/:id/appointments
-  - Body: { scheduled_at, title, agenda?, meeting_type? }
-  - `scheduled_at` and `title` are required. Creates an appointment linked to the client with `status` defaulting to `Scheduled` and `meeting_type` defaulting to `Remote` (added in migration 015; one of `Remote`/`In-Person`, enforced via a `CHECK` constraint, not an enum). Same current-stage permission check as `PUT /clients/:id`.
+  - Body: { scheduled_at, title, agenda?, meeting_type?, location?, meeting_link? }
+  - `scheduled_at` and `title` are required. Creates an appointment linked to the client with `status` defaulting to `Scheduled` and `meeting_type` defaulting to `Remote` (added in migration 015; one of `Remote`/`In-Person`, enforced via a `CHECK` constraint, not an enum). `location` and `meeting_link` (added in migration 020, both nullable) are freeform text — the frontend shows/collects `location` for `In-Person` appointments and `meeting_link` for `Remote` ones, but the API itself doesn't enforce that pairing. Same current-stage permission check as `PUT /clients/:id`.
 
 - PUT /appointments/:id
-  - Body: any subset of { scheduled_at, title, agenda, status, meeting_type } to update. `status` is one of `Scheduled`/`Completed`/`Cancelled` (the `appointment_status` enum); `meeting_type` is one of `Remote`/`In-Person`. Returns the updated resource, 404 if not found. Permission check resolves the owning client via `appointments.client_id`.
+  - Body: any subset of { scheduled_at, title, agenda, status, meeting_type, location, meeting_link } to update. `status` is one of `Scheduled`/`Completed`/`Cancelled` (the `appointment_status` enum); `meeting_type` is one of `Remote`/`In-Person`. Returns the updated resource, 404 if not found. Permission check resolves the owning client via `appointments.client_id`.
 
 - DELETE /appointments/:id
   - Deletes a single appointment. Returns 204 on success, 404 if not found. Same permission check as PUT.
@@ -93,13 +93,11 @@ Authentication & Users
 - `users.password_hash` (added in migration 002) stores a bcrypt hash. Plaintext passwords are never stored or returned.
 - `users` columns as of migration 018: `id`, `name` (required), `email` (required), `created_at`, `position_name` (nullable, not yet used by any feature — reserved for future use), `password_hash`, `is_active`, `role_id`. Migration 018 fixed a drift where `001_create_schema_up.sql` still described a `username`/`full_name`/nullable-`email` shape that the running app never actually used (it always read/wrote a single `name` column) — also dropped two dead, unused columns (`position_id`, and `user_status`, which duplicated `is_active`).
 
-- POST /auth/register
-  - Body: { name, email, password } (password min 8 chars)
-  - Creates a user with a bcrypt-hashed password. Returns { id, name, email } (no hash).
+- There is no self-registration endpoint — accounts can only be created by an admin via `POST /users`. (`POST /auth/register` existed previously but was removed; only `/auth/login` remains public under `/auth/*`.)
 
 - POST /auth/login
-  - Body: { email, password }
-  - Returns { token, user: { id, name, email, role_id, role } } on success (`role` is the role's display name, joined for convenience — `role_id` is what authorization actually keys on). `token` is a JWT (HS256, 12h expiry) signed with `JWT_SECRET`, embedding `role_id`. Returns 403 `{ error: "Account is deactivated" }` if `is_active` is false.
+  - Body: { email, password, remember? }
+  - Returns { token, user: { id, name, email, role_id, role } } on success (`role` is the role's display name, joined for convenience — `role_id` is what authorization actually keys on). `token` is a JWT (HS256) signed with `JWT_SECRET`, embedding `role_id` — expiry is 30 days if `remember` is truthy, otherwise 12 hours. Returns 403 `{ error: "Account is deactivated" }` if `is_active` is false.
   - Rate-limited to 10 attempts per 15 minutes per IP (`express-rate-limit`); returns 429 with `{ error: "Too many login attempts. Please try again later." }` past that.
 
 - All endpoints below `/auth/*` require `Authorization: Bearer <token>` from a successful login, or they return 401.
@@ -123,7 +121,7 @@ Frontend build-time variable
 
 Roles & Permissions (migration 007 added roles as an enum, migration 008 added the permissions matrix, migration 009 replaced the enum with a `roles` table so roles can be added/renamed from the app)
 - `roles(id, name, protected, created_at)` — a role is a row, not a fixed code value. `protected=true` marks a role that can't be renamed (seeded on `admin` only) — there is currently no role deletion, only create and rename.
-- `users.role_id` (FK to `roles.id`, default is the `user` role) replaces the old `users.role` enum column. `users.is_active` (default `true`) still gates login — deactivated accounts get 403 on `/auth/login` regardless of a correct password.
+- `users.role_id` (FK to `roles.id`) replaces the old `users.role` enum column. The column still carries a DB-level default (the `Customer Relation` role, set in migration 011) but nothing in the app relies on it anymore now that self-registration is removed — the Add User form always sends `role_id` explicitly. `users.is_active` (default `true`) still gates login — deactivated accounts get 403 on `/auth/login` regardless of a correct password.
 - `role_permissions(role_id, page_key)` is the configurable matrix: which page_keys (`phase1`, `phase2`, `phase3`, `system_admin`) each role can access. `role_id` is read from the JWT claims at request time — a role reassignment takes effect the next time that user logs in (new token), not retroactively on their current session. A permissions-matrix edit takes effect for other users the next time their frontend reloads `/permissions/me` (on next login/app load), not mid-session.
 - `requirePage(pageKey)` is the generic middleware backing all page-level gating, including System Administration (`system_admin`) — there is no separate hardcoded admin check. `requireClientPhase(...)` is the analogous middleware for client-scoped resources, gating by the client's `stage` column (which maps 1:1 onto the `phase1`/`phase2` page_keys) instead of a fixed page_key.
 - The "don't lock yourself out" safeguard on `PUT /permissions` is role-agnostic: it rejects any update that would leave *zero* roles with `system_admin` access, rather than hardcoding the role named `admin`.
@@ -151,8 +149,8 @@ Roles & Permissions (migration 007 added roles as an enum, migration 008 added t
   - Requires `system_admin` page access. Returns all users: { id, name, email, role_id, role_name, is_active, created_at } (no password data).
 
 - POST /users
-  - Requires `system_admin` page access. Body: { name, email, password, role_id? } (password min 8 chars, `role_id` defaults to the `user` role, 400 if `role_id` doesn't reference an existing role)
-  - Admin-created account, same validation as `/auth/register` plus an explicit role.
+  - Requires `system_admin` page access. Body: { name, email, password, role_id? } (password min 8 chars, 400 if `role_id` doesn't reference an existing role)
+  - The only way to create a user account — there is no public self-registration endpoint.
 
 - PUT /users/:id
   - Requires `system_admin` page access. Body: any subset of { role_id, is_active } to update. Returns the updated resource (no password data), 400 if `role_id` doesn't exist, 404 if the user isn't found.
