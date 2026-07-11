@@ -73,6 +73,20 @@ Appointments
 
 - Phase 2 replaced its Call log (notes) section with Appointments; Phase 1 still uses notes.
 
+Documents (migration 021)
+- `client_documents(id, client_id, file_name, mime_type, file_size, file_data, uploaded_by, created_at)` — file bytes are stored directly in Postgres as `BYTEA` rather than on disk or an object store, since Render's web service disk is ephemeral. Uploads are capped at 10MB (`multer`, in-memory storage).
+- GET /clients/:id
+  - The client detail bundle also includes `documents` — an array of metadata only (no `file_data`), ordered newest first.
+
+- POST /clients/:id/documents
+  - Requires `phase1` page access (Client Relation) specifically — unlike other client-scoped writes, this is not gated by the client's current stage via `requireClientPhase`, so Client Relation can still attach a document to a client even after it has graduated to `phase2`/`phase3`. Body: `multipart/form-data` with a single `file` field. `uploaded_by` is taken from the authenticated user's own id (JWT `sub`), not from the request body. Returns the created document's metadata (no `file_data`).
+
+- GET /clients/:id/documents/:docId/download
+  - Same current-stage permission check as `GET /clients/:id` (`requireClientPhase`) — any role that can currently view the client can download its documents. Streams the raw file bytes with `Content-Type` and `Content-Disposition: attachment` set from the stored `mime_type`/`file_name`.
+
+- DELETE /clients/:id/documents/:docId
+  - Requires `phase1` page access, same as upload. Returns 204 on success, 404 if not found.
+
 Engagements
 - POST /clients/:id/engagements
   - Body: { title, description, created_by (user id), current_assigned_user (optional) }

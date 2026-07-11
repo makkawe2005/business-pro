@@ -4,9 +4,11 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const db = require('./database');
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const allowedOrigin = process.env.FRONTEND_ORIGIN;
 app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
@@ -308,7 +310,11 @@ app.get('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, r
     const appointmentsQ = 'SELECT * FROM appointments WHERE client_id=$1 ORDER BY scheduled_at ASC';
     const { rows: appointments } = await db.query(appointmentsQ, [id]);
 
-    res.json({ client, notes, engagements, companies, appointments });
+    const documentsQ = `SELECT id, client_id, file_name, mime_type, file_size, uploaded_by, created_at
+                         FROM client_documents WHERE client_id=$1 ORDER BY created_at DESC`;
+    const { rows: documents } = await db.query(documentsQ, [id]);
+
+    res.json({ client, notes, engagements, companies, appointments, documents });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch client details' });
@@ -537,6 +543,58 @@ app.delete('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete appointment' });
+  }
+});
+
+// Documents (listed as part of the GET /clients/:id bundle; upload/delete restricted to Client
+// Relation regardless of the client's current stage, download available to whoever can currently
+// view the client, matching requireClientPhase everywhere else).
+app.post('/clients/:id/documents', requirePage('phase1'), upload.single('file'), async (req, res) => {
+  const clientId = Number(req.params.id);
+  if (!req.file) return res.status(400).json({ error: 'file required' });
+  try {
+    const q = `INSERT INTO client_documents (client_id, file_name, mime_type, file_size, file_data, uploaded_by)
+               VALUES ($1,$2,$3,$4,$5,$6)
+               RETURNING id, client_id, file_name, mime_type, file_size, uploaded_by, created_at`;
+    const { rows } = await db.query(q, [
+      clientId, req.file.originalname, req.file.mimetype, req.file.size, req.file.buffer, req.user.sub
+    ]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to upload document' });
+  }
+});
+
+app.get('/clients/:id/documents/:docId/download', requireClientPhase(resolveClientIdDirect), async (req, res) => {
+  const docId = Number(req.params.docId);
+  try {
+    const { rows } = await db.query(
+      'SELECT file_name, mime_type, file_data FROM client_documents WHERE id=$1 AND client_id=$2',
+      [docId, Number(req.params.id)]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Document not found' });
+    const doc = rows[0];
+    res.set('Content-Type', doc.mime_type);
+    res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.file_name)}"`);
+    res.send(doc.file_data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to download document' });
+  }
+});
+
+app.delete('/clients/:id/documents/:docId', requirePage('phase1'), async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM client_documents WHERE id=$1 AND client_id=$2 RETURNING id',
+      [Number(req.params.docId), Number(req.params.id)]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Document not found' });
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete document' });
   }
 });
 

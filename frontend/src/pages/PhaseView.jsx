@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 import { useAuthStore } from '../store/authStore';
+import { usePermissionsStore } from '../store/permissionsStore';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 import { initials } from '../utils/format';
@@ -14,6 +15,7 @@ import { CompanySection } from '../components/CompanySection';
 import { ServicesSection } from '../components/ServicesSection';
 import { NotesSection } from '../components/NotesSection';
 import { AppointmentsSection } from '../components/AppointmentsSection';
+import { DocumentsSection } from '../components/DocumentsSection';
 import { PipelineCard } from '../components/PipelineCard';
 
 const emptyClientForm = { contact_name: '', email: '', phone: '' };
@@ -30,6 +32,7 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
   const location = useLocation();
   const currentUser = useAuthStore((s) => s.user);
   const showToast = useToastStore((s) => s.showToast);
+  const canUploadDocuments = usePermissionsStore((s) => s.pageKeys.includes('phase1'));
 
   const CLIENTS_PAGE_SIZE = 5;
 
@@ -368,6 +371,57 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
     }
   }
 
+  async function handleUploadDocument(file) {
+    if (selectedClientId === null) {
+      showToast(t('common.selectClientFirst'), 'error');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await apiFetch(`/clients/${selectedClientId}/documents`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Failed to upload document');
+      await selectClient(selectedClientId);
+      showToast(t('documents.uploadSuccess'));
+    } catch (err) {
+      console.error(err);
+      showToast(t('documents.uploadFailed'), 'error');
+    }
+  }
+
+  async function handleDownloadDocument(doc) {
+    try {
+      const res = await apiFetch(`/clients/${selectedClientId}/documents/${doc.id}/download`);
+      if (!res.ok) throw new Error('Failed to download document');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = doc.file_name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      showToast(t('documents.downloadFailed'), 'error');
+    }
+  }
+
+  async function handleRemoveDocument(id) {
+    const confirmed = window.confirm(t('documents.confirmRemove'));
+    if (!confirmed) return;
+    try {
+      const res = await apiFetch(`/clients/${selectedClientId}/documents/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to remove document');
+      await selectClient(selectedClientId);
+      showToast(t('documents.removeSuccess'));
+    } catch (err) {
+      console.error(err);
+      showToast(t('documents.removeFailed'), 'error');
+    }
+  }
+
   function handleCompanyFieldChange(field, value) {
     setCompanyFormValues((prev) => ({ ...prev, [field]: value }));
   }
@@ -553,6 +607,7 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
   const notes = detail?.notes || [];
   const companies = detail?.companies || [];
   const appointments = detail?.appointments || [];
+  const documents = detail?.documents || [];
 
   return (
     <>
@@ -698,6 +753,16 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
                   onSubmit={submitCompany}
                   onCancel={cancelCompanyForm}
                   canEdit={canEditClient}
+                />
+              </CollapsibleSection>
+
+              <CollapsibleSection title={t('documents.title')} defaultCollapsed>
+                <DocumentsSection
+                  documents={documents}
+                  canUpload={canUploadDocuments}
+                  onUpload={handleUploadDocument}
+                  onDownload={handleDownloadDocument}
+                  onRemove={handleRemoveDocument}
                 />
               </CollapsibleSection>
 
