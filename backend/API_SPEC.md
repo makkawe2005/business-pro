@@ -59,7 +59,7 @@ Appointments
   - The client detail bundle now also includes `appointments` (chronological, soonest first) — added in migration 006, scoped to a single client.
 
 - GET /appointments
-  - Requires `phase1` page access (appointments only exist in Client Relation today). Cross-client listing — powers the Calendar page. Query params: `from`/`to` (optional, `YYYY-MM-DD`, inclusive on both ends, filters on `scheduled_at`'s date) and `status` (optional, comma-separated `appointment_status` values, e.g. `status=Scheduled`). Returns every matching appointment across all clients, each with `client_id`, `contact_name`, and `stage` attached, sorted by `scheduled_at` ascending.
+  - Requires `calendar` page access (added in migration 019, granted to every existing role by default — independent of `phase1`, same pattern as `dashboard`, even though appointments only exist in Client Relation today). Cross-client listing — powers the Calendar page. Query params: `from`/`to` (optional, `YYYY-MM-DD`, inclusive on both ends, filters on `scheduled_at`'s date) and `status` (optional, comma-separated `appointment_status` values, e.g. `status=Scheduled`). Returns every matching appointment across all clients, each with `client_id`, `contact_name`, and `stage` attached, sorted by `scheduled_at` ascending.
 
 - POST /clients/:id/appointments
   - Body: { scheduled_at, title, agenda?, meeting_type? }

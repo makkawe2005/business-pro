@@ -42,8 +42,10 @@ export default function App() {
             <Route element={<RequirePage pageKey="dashboard" />}>
               <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
-            <Route element={<RequirePage pageKey="phase1" />}>
+            <Route element={<RequirePage pageKey="calendar" />}>
               <Route path="/calendar" element={<CalendarPage />} />
+            </Route>
+            <Route element={<RequirePage pageKey="phase1" />}>
               <Route
                 path="/phase1"
                 element={

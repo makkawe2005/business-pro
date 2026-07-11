@@ -49,7 +49,7 @@ export function AppShell() {
           {pageKeys.includes('phase1') && <NavLink to="/phase1" className={tabClass}>{t('nav.phase1')}</NavLink>}
           {pageKeys.includes('phase2') && <NavLink to="/phase2" className={tabClass}>{t('nav.phase2')}</NavLink>}
           {pageKeys.includes('phase3') && <NavLink to="/phase3" className={tabClass}>{t('nav.phase3')}</NavLink>}
-          {pageKeys.includes('phase1') && <NavLink to="/calendar" className={tabClass}>{t('nav.calendar')}</NavLink>}
+          {pageKeys.includes('calendar') && <NavLink to="/calendar" className={tabClass}>{t('nav.calendar')}</NavLink>}
           {pageKeys.includes('system_admin') && (
             <NavLink to="/system-admin" className={tabClass}>{t('nav.systemAdmin')}</NavLink>
           )}

@@ -465,7 +465,7 @@ app.delete('/companies/:id', requireClientPhase(resolveClientIdViaCompany), asyn
 });
 
 // Appointments
-app.get('/appointments', requirePage('phase1'), async (req, res) => {
+app.get('/appointments', requirePage('calendar'), async (req, res) => {
   const { from, to, status } = req.query;
   try {
     const conditions = [];
@@ -751,7 +751,7 @@ app.put('/roles/:id', requirePage('system_admin'), async (req, res) => {
 });
 
 // Permissions (role -> page access matrix)
-const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'system_admin'];
+const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'system_admin'];
 
 app.get('/permissions/me', async (req, res) => {
   try {
