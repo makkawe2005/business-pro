@@ -465,6 +465,40 @@ app.delete('/companies/:id', requireClientPhase(resolveClientIdViaCompany), asyn
 });
 
 // Appointments
+app.get('/appointments', requirePage('phase1'), async (req, res) => {
+  const { from, to, status } = req.query;
+  try {
+    const conditions = [];
+    const params = [];
+    if (from) {
+      params.push(from);
+      conditions.push(`a.scheduled_at::date >= $${params.length}::date`);
+    }
+    if (to) {
+      params.push(to);
+      conditions.push(`a.scheduled_at::date <= $${params.length}::date`);
+    }
+    if (status) {
+      params.push(status.split(','));
+      conditions.push(`a.status = ANY($${params.length}::appointment_status[])`);
+    }
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const { rows } = await db.query(
+      `SELECT a.id, a.scheduled_at, a.title, a.agenda, a.status, a.meeting_type,
+              c.id AS client_id, c.contact_name, c.stage
+       FROM appointments a
+       JOIN clients c ON c.id = a.client_id
+       ${whereClause}
+       ORDER BY a.scheduled_at ASC`,
+      params
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch appointments' });
+  }
+});
+
 app.post('/clients/:id/appointments', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const clientId = Number(req.params.id);
   const { scheduled_at, title, agenda, created_by, meeting_type } = req.body;

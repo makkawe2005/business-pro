@@ -1027,6 +1027,141 @@ body {
   margin-top: 2px;
 }
 
+.calendar-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.calendar-header h2 {
+  font-size: 1.3rem;
+  margin: 0 0 4px;
+  color: var(--bp-ink);
+}
+
+.calendar-header p {
+  margin: 0;
+  color: var(--bp-muted);
+  font-size: 0.9rem;
+}
+
+.calendar-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calendar-week-nav span {
+  font-size: 0.85rem;
+  color: var(--bp-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.calendar-day-group {
+  margin-bottom: 6px;
+}
+
+.calendar-day-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 4px 8px;
+}
+
+.calendar-day-heading .dow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bp-muted);
+}
+
+.calendar-day-heading .dom {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--bp-ink);
+}
+
+.calendar-today-pill {
+  background: var(--bp-gold);
+  color: #3a2c02;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.calendar-day-count {
+  margin-inline-start: auto;
+  font-size: 0.78rem;
+  color: var(--bp-muted);
+}
+
+.calendar-appt-card {
+  background: var(--bp-surface);
+  border: 1px solid var(--bp-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.calendar-appt-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.calendar-appt-main .client {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--bp-ink);
+}
+
+.calendar-appt-main .title {
+  font-size: 0.84rem;
+  color: var(--bp-body);
+  margin-top: 1px;
+}
+
+.calendar-meeting-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.calendar-meeting-pill.remote {
+  background: var(--bp-success-bg);
+  color: var(--bp-success);
+  border: 1px solid var(--bp-success-border);
+}
+
+.calendar-meeting-pill.in-person {
+  background: var(--bp-warning-bg);
+  color: var(--bp-warning);
+  border: 1px solid var(--bp-warning-border);
+}
+
+.calendar-empty-day {
+  border: 1px dashed var(--bp-border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  color: var(--bp-muted);
+  font-size: 0.84rem;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
 .status-chart {
   display: flex;
   flex-direction: column;

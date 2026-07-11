@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { PublicRegistrationPage } from './pages/PublicRegistrationPage';
 import { PhaseView } from './pages/PhaseView';
 import { DashboardPage } from './pages/DashboardPage';
+import { CalendarPage } from './pages/CalendarPage';
 import { AdminPage } from './pages/AdminPage';
 import { UsersPage } from './pages/UsersPage';
 import { PermissionsPage } from './pages/PermissionsPage';
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
             </Route>
             <Route element={<RequirePage pageKey="phase1" />}>
+              <Route path="/calendar" element={<CalendarPage />} />
               <Route
                 path="/phase1"
                 element={
