@@ -8,7 +8,7 @@ function emptyForm(defaultRoleId) {
 }
 
 export function UsersPage() {
-  const { t } = useI18n();
+  const { t, translateServerError } = useI18n();
   const showToast = useToastStore((s) => s.showToast);
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
@@ -56,7 +56,11 @@ export function UsersPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role_id: form.role_id })
       });
-      if (!res.ok) throw new Error('Failed to add user');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.error ? translateServerError(body.error) : t('users.addFailed'), 'error');
+        return;
+      }
       setForm((prev) => emptyForm(prev.role_id));
       await loadUsers();
       showToast(t('users.addSuccess'));
@@ -72,7 +76,11 @@ export function UsersPage() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role_id: Number(roleId) })
       });
-      if (!res.ok) throw new Error('Failed to update role');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.error ? translateServerError(body.error) : t('users.roleUpdateFailed'), 'error');
+        return;
+      }
       await loadUsers();
       showToast(t('users.roleUpdateSuccess'));
     } catch (err) {
@@ -87,7 +95,11 @@ export function UsersPage() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !isActive })
       });
-      if (!res.ok) throw new Error('Failed to update status');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.error ? translateServerError(body.error) : t('users.statusUpdateFailed'), 'error');
+        return;
+      }
       await loadUsers();
       showToast(t('users.statusUpdateSuccess'));
     } catch (err) {
@@ -108,7 +120,11 @@ export function UsersPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ new_password: newPassword })
       });
-      if (!res.ok) throw new Error('Failed to reset password');
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.error ? translateServerError(body.error) : t('users.resetPasswordFailed'), 'error');
+        return;
+      }
       showToast(t('users.resetPasswordSuccess'));
     } catch (err) {
       console.error(err);

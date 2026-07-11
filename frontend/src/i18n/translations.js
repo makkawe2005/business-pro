@@ -555,5 +555,6 @@ export const serverErrorTranslations = {
   'name, email and password required': 'الاسم والبريد الإلكتروني وكلمة المرور مطلوبة',
   'password must be at least 8 characters': 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل',
   'Email already registered': 'البريد الإلكتروني مسجل بالفعل',
-  'Invalid email or password': 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+  'Invalid email or password': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+  'role_id does not exist': 'الدور المحدد غير موجود'
 };
