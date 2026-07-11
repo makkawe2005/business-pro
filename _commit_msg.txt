@@ -1,5 +1,0 @@
-Replace emoji icons with formal SVG icon set, real favicon, calendar title emphasis
-
-- Add Icons.jsx (globe, logout, eye/eye-off) - minimal line icons using currentColor, replacing the emoji used for language toggle, logout, and password show/hide
-- Bump the appointment title on Calendar cards to a bolder, darker weight so it reads clearly alongside location/meeting link
-- Replace the default Vite favicon.svg with a generated favicon.png: navy backing plate + the actual Business Pro logo mark, matching the same treatment already used for the logo on light backgrounds elsewhere in the app
