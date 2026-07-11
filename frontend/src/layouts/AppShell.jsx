@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { usePermissionsStore } from '../store/permissionsStore';
 import { useI18n } from '../i18n/useI18n';
 import { ToastContainer } from '../components/ToastContainer';
+import { GlobeIcon, LogoutIcon } from '../components/Icons';
 import logo from '../assets/logo.png';
 
 export function AppShell() {
@@ -51,7 +52,7 @@ export function AppShell() {
               title={nextLangLabel}
               aria-label={nextLangLabel}
             >
-              🌐 {nextLangCode}
+              <GlobeIcon /> {nextLangCode}
             </button>
             <button
               className="button neutral icon-button"
@@ -60,7 +61,7 @@ export function AppShell() {
               title={t('logout')}
               aria-label={t('logout')}
             >
-              🚪
+              <LogoutIcon />
             </button>
           </div>
         </div>

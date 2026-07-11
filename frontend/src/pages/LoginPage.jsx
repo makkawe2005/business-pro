@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { API_BASE } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { useI18n } from '../i18n/useI18n';
+import { GlobeIcon, EyeIcon, EyeOffIcon } from '../components/Icons';
 import logo from '../assets/logo.png';
 
 export function LoginPage() {
@@ -69,7 +70,7 @@ export function LoginPage() {
             title={nextLangLabel}
             aria-label={nextLangLabel}
           >
-            🌐 {nextLangCode}
+            <GlobeIcon /> {nextLangCode}
           </button>
         </div>
 
@@ -113,7 +114,7 @@ export function LoginPage() {
               title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
             >
-              {showPassword ? '🙈' : '👁️'}
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
           </div>
         </div>

@@ -115,6 +115,9 @@ body {
 }
 
 .icon-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 6px 10px;
   font-size: 0.85rem;
   line-height: 1;
@@ -892,6 +895,9 @@ body {
 }
 
 .login-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: none;
   border: 1px solid var(--bp-border);
   border-radius: var(--radius-sm);
@@ -917,12 +923,17 @@ body {
 .password-toggle {
   position: absolute;
   inset-inline-end: 8px;
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  line-height: 1;
+  color: var(--bp-muted);
   padding: 4px;
+}
+
+.password-toggle:hover {
+  color: var(--bp-navy);
 }
 
 .remember-me-row {
@@ -1181,9 +1192,10 @@ body {
 }
 
 .calendar-appt-main .title {
-  font-size: 0.84rem;
-  color: var(--bp-body);
-  margin-top: 1px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bp-ink);
+  margin-top: 2px;
 }
 
 .calendar-appt-main .location {

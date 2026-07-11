@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { API_BASE } from '../api/client';
 import { useI18n } from '../i18n/useI18n';
+import { GlobeIcon } from '../components/Icons';
 import logo from '../assets/logo.png';
 
 const emptyForm = {
@@ -75,7 +76,7 @@ export function PublicRegistrationPage() {
             title={nextLangLabel}
             aria-label={nextLangLabel}
           >
-            🌐 {nextLangCode}
+            <GlobeIcon /> {nextLangCode}
           </button>
         </div>
 
