@@ -33,6 +33,9 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <div className="mobile-topbar">
+        <div className="mobile-topbar-brand">
+          <img className="brand-mark" src={logo} alt="Business Pro" />
+        </div>
         <button
           type="button"
           className="hamburger-button"
@@ -42,9 +45,6 @@ export function AppShell() {
         >
           ☰
         </button>
-        <div className="mobile-topbar-brand">
-          <img className="brand-mark" src={logo} alt="Business Pro" />
-        </div>
       </div>
 
       {menuOpen && <div className="sidebar-backdrop" onClick={closeMenu} />}
