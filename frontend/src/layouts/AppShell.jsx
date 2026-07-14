@@ -33,15 +33,18 @@ export function AppShell() {
   return (
     <div className="app-shell">
       {!menuOpen && (
-        <button
-          type="button"
-          className="mobile-menu-fab"
-          onClick={() => setMenuOpen(true)}
-          aria-label={t('nav.openMenu')}
-          aria-expanded={menuOpen}
-        >
-          ☰
-        </button>
+        <div className="mobile-menu-trigger">
+          <button
+            type="button"
+            className="mobile-menu-fab"
+            onClick={() => setMenuOpen(true)}
+            aria-label={t('nav.openMenu')}
+            aria-expanded={menuOpen}
+          >
+            ☰
+          </button>
+          <span className="mobile-menu-brand">Business Pro</span>
+        </div>
       )}
 
       {menuOpen && <div className="sidebar-backdrop" onClick={closeMenu} />}
