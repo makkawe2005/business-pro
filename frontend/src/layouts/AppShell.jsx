@@ -32,20 +32,17 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      <div className="mobile-topbar">
-        <div className="mobile-topbar-brand">
-          <img className="brand-mark" src={logo} alt="Business Pro" />
-        </div>
+      {!menuOpen && (
         <button
           type="button"
-          className="hamburger-button"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label={menuOpen ? t('nav.closeMenu') : t('nav.openMenu')}
+          className="mobile-menu-fab"
+          onClick={() => setMenuOpen(true)}
+          aria-label={t('nav.openMenu')}
           aria-expanded={menuOpen}
         >
           ☰
         </button>
-      </div>
+      )}
 
       {menuOpen && <div className="sidebar-backdrop" onClick={closeMenu} />}
 

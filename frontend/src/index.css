@@ -3,7 +3,6 @@
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --bp-font-heading: Georgia, 'Times New Roman', serif;
   --sidebar-width: 232px;
-  --mobile-topbar-height: 104px;
   --bp-navy: #0b2f5c;
   --bp-navy-dark: #071f40;
   --bp-navy-tint: rgba(11, 47, 92, 0.06);
@@ -78,43 +77,12 @@ body {
   line-height: 1;
 }
 
-.mobile-topbar {
+.mobile-menu-fab {
   display: none;
-  flex-direction: column;
-  align-items: flex-start;
-  background: var(--bp-navy-dark);
-  gap: 6px;
-  padding: 10px 16px;
-  box-sizing: border-box;
-  min-height: var(--mobile-topbar-height);
-  z-index: 30;
 }
 
-.mobile-topbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #ffffff;
-  font-family: var(--bp-font-heading);
-  font-size: 1rem;
-}
-
-.mobile-topbar .brand-mark {
-  background: transparent;
-  padding: 0;
-}
-
-.hamburger-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: #ffffff;
-  font-size: 1.3rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 4px 8px;
+.investors-add-fab {
+  display: none;
 }
 
 .sidebar-backdrop {
@@ -1726,16 +1694,53 @@ body {
 }
 
 @media (max-width: 900px) {
-  .mobile-topbar {
+  .mobile-menu-fab {
     display: flex;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 16px;
+    left: 16px;
+    width: clamp(40px, 11vw, 52px);
+    height: clamp(40px, 11vw, 52px);
+    border-radius: 50%;
+    background: var(--bp-navy-dark);
+    color: #ffffff;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.05rem, 4vw, 1.35rem);
+    border: none;
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(7, 31, 64, 0.35);
+    cursor: pointer;
   }
 
-  .app-content {
-    padding-top: var(--mobile-topbar-height);
+  .investors-add-desktop {
+    display: none;
+  }
+
+  .investors-add-fab {
+    display: flex;
+    position: fixed;
+    bottom: 24px;
+    inset-inline-end: 24px;
+    width: clamp(48px, 14vw, 64px);
+    height: clamp(48px, 14vw, 64px);
+    border-radius: 50%;
+    background: var(--bp-gold);
+    color: var(--bp-navy-dark);
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    font-weight: 700;
+    line-height: 1;
+    border: none;
+    z-index: 20;
+    box-shadow: 0 6px 16px rgba(202, 138, 4, 0.4);
+    cursor: pointer;
+  }
+
+  [dir="rtl"] .mobile-menu-fab {
+    left: auto;
+    right: 16px;
   }
 
   .app-sidebar {

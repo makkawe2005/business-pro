@@ -159,7 +159,7 @@ export function InvestorsPage() {
         <section className="panel panel-left">
           <div className="panel-header">
             <h2>{t('investors.listTitle')}</h2>
-            <button className="button primary" type="button" onClick={openAddForm}>{t('investors.addButton')}</button>
+            <button className="button primary investors-add-desktop" type="button" onClick={openAddForm}>{t('investors.addButton')}</button>
           </div>
           <div className="search-row">
             <input
@@ -361,6 +361,15 @@ export function InvestorsPage() {
           )}
         </section>
       </div>
+
+      <button
+        type="button"
+        className="investors-add-fab"
+        onClick={openAddForm}
+        aria-label={t('investors.addButton')}
+      >
+        +
+      </button>
     </>
   );
 }
