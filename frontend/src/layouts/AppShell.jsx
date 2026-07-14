@@ -44,7 +44,6 @@ export function AppShell() {
         </button>
         <div className="mobile-topbar-brand">
           <img className="brand-mark" src={logo} alt="Business Pro" />
-          <span>Business Pro</span>
         </div>
       </div>
 
