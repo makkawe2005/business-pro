@@ -51,6 +51,17 @@ export const countryOptions = [
   { value: 'Other', key: 'common.other' }
 ];
 
+export const countryPhonePrefixes = {
+  'Saudi Arabia': '+966',
+  'United Arab Emirates': '+971',
+  'Bahrain': '+973',
+  'Kuwait': '+965',
+  'Oman': '+968',
+  'Qatar': '+974',
+  'Egypt': '+20',
+  'Jordan': '+962'
+};
+
 export const industryOptions = [
   { value: 'Data analytics', key: 'industry.dataAnalytics' },
   { value: 'Retail', key: 'industry.retail' },
@@ -66,10 +77,9 @@ export const emptyCompanyForm = {
   name: '',
   region: '',
   city: '',
-  country: '',
+  country: 'Saudi Arabia',
   commercial_registration_number: '',
   vat_number: '',
-  national_address: '',
   industry: '',
   briefing: '',
   contact_person_name: '',

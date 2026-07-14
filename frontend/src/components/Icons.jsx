@@ -44,3 +44,21 @@ export function EyeOffIcon(props) {
     </svg>
   );
 }
+
+export function FolderIcon(props) {
+  return (
+    <svg {...base} width="20" height="20" aria-hidden="true" {...props}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon(props) {
+  return (
+    <svg {...base} width="16" height="16" aria-hidden="true" {...props}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}

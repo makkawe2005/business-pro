@@ -27,7 +27,7 @@ Clients
   - Requires the caller's role to have the target `stage` (post-default) as a permitted page_key, or returns 403.
 
 - PUT /clients/:id
-  - Body: fields to update (same as POST, including `stage`, plus `service_consultation`/`service_investment`/`service_business_solutions` — booleans, added in migration 014, default `false`, toggled independently from the Services checkboxes in the client detail panel). Returns updated resource. Used to graduate a client from Phase 1 to Phase 2 via `{ "stage": "phase2", "status": "Active" }`, from Phase 2 to Phase 3 via `{ "stage": "phase3", "status": "Finalizing" }` (added in migration 016), or to send a Phase 2 **or** Phase 3 client back to Client Relation via `{ "stage": "phase1", "status": "Reschedule" }` — both Sales and Finance & Legal reschedule directly to Client Relation, not to the immediately preceding phase, so `Reschedule` status always means "sitting in Client Relation, kicked back from downstream."
+  - Body: fields to update (same as POST, including `stage`, plus `service_consultation`/`service_investment`/`service_business_solutions` — booleans, added in migration 014, default `false`, toggled independently from the Services checkboxes in the client detail panel; and `contract_price`/`payment_type` — free-text strings, added in migration 024, edited via the Contract Details section shown on Sales (phase2) and Legal & Finance (phase3) only). Returns updated resource. Used to graduate a client from Phase 1 to Phase 2 via `{ "stage": "phase2", "status": "Active" }`, from Phase 2 to Phase 3 via `{ "stage": "phase3", "status": "Finalizing" }` (added in migration 016), or to send a Phase 2 **or** Phase 3 client back to Client Relation via `{ "stage": "phase1", "status": "Reschedule" }` — both Sales and Finance & Legal reschedule directly to Client Relation, not to the immediately preceding phase, so `Reschedule` status always means "sitting in Client Relation, kicked back from downstream."
   - Permission check is based on the client's **current** stage (pre-update), not the target stage — a phase1-only role can still graduate a client into phase2 via this call (a normal handoff), it just can't independently browse/edit phase2 clients afterward. Returns 403 if the caller's role lacks the client's current stage.
 
 - DELETE /clients/:id
@@ -43,8 +43,8 @@ Notes
 
 Companies
 - POST /clients/:id/companies
-  - Body: { name, region?, city?, country?, commercial_registration_number?, vat_number?, national_address?, industry?, briefing?, contact_person_name?, additional_phone_number? }
-  - Creates a company record owned by the client (`companies.client_id` FK, `ON DELETE CASCADE`, added in migration 004). `name` is required, all other fields optional. `industry`, `briefing`, `contact_person_name`, and `additional_phone_number` were added in migration 005. Same current-stage permission check as `PUT /clients/:id`.
+  - Body: { name, region?, city?, country?, commercial_registration_number?, vat_number?, industry?, briefing?, contact_person_name?, additional_phone_number? }
+  - Creates a company record owned by the client (`companies.client_id` FK, `ON DELETE CASCADE`, added in migration 004). `name` is required, all other fields optional — except `briefing`, which is required when the owning client is currently in `phase1` (Client Relation). `industry`, `briefing`, `contact_person_name`, and `additional_phone_number` were added in migration 005. `national_address` was removed in migration 022. Same current-stage permission check as `PUT /clients/:id`.
 
 - PUT /companies/:id
   - Body: any subset of the POST fields to update. Returns the updated resource, 404 if not found. Permission check resolves the owning client via `companies.client_id` and applies the same current-stage rule.
@@ -71,21 +71,16 @@ Appointments
 - DELETE /appointments/:id
   - Deletes a single appointment. Returns 204 on success, 404 if not found. Same permission check as PUT.
 
-- Phase 2 replaced its Call log (notes) section with Appointments; Phase 1 still uses notes.
+- Phase 2 replaced its Call log (notes) section with Appointments; Phase 1 has no notes section (removed — see below), other phases still use notes.
+- Notes are hidden from the Client Relation (phase1) UI specifically (frontend-only condition in `PhaseView.jsx`); the `POST /clients/:id/notes` endpoint itself has no stage restriction.
 
-Documents (migration 021)
-- `client_documents(id, client_id, file_name, mime_type, file_size, file_data, uploaded_by, created_at)` — file bytes are stored directly in Postgres as `BYTEA` rather than on disk or an object store, since Render's web service disk is ephemeral. Uploads are capped at 10MB (`multer`, in-memory storage).
+Google Drive link (migration 023, replaces the earlier file-upload Documents feature from migration 021)
+- `clients.drive_link` (`VARCHAR(500)`, nullable) — a single external Google Drive URL per client, replacing the old in-Postgres `BYTEA` document storage. `client_documents` and its upload/download endpoints were dropped; any previously-uploaded files were discarded (accepted data loss).
 - GET /clients/:id
-  - The client detail bundle also includes `documents` — an array of metadata only (no `file_data`), ordered newest first.
+  - The returned `client` object includes `drive_link` directly (no separate array/bundle key).
 
-- POST /clients/:id/documents
-  - Requires `phase1` page access (Client Relation) specifically — unlike other client-scoped writes, this is not gated by the client's current stage via `requireClientPhase`, so Client Relation can still attach a document to a client even after it has graduated to `phase2`/`phase3`. Body: `multipart/form-data` with a single `file` field. `uploaded_by` is taken from the authenticated user's own id (JWT `sub`), not from the request body. Returns the created document's metadata (no `file_data`).
-
-- GET /clients/:id/documents/:docId/download
-  - Same current-stage permission check as `GET /clients/:id` (`requireClientPhase`) — any role that can currently view the client can download its documents. Streams the raw file bytes with `Content-Type` and `Content-Disposition: attachment` set from the stored `mime_type`/`file_name`.
-
-- DELETE /clients/:id/documents/:docId
-  - Requires `phase1` page access, same as upload. Returns 204 on success, 404 if not found.
+- PUT /clients/:id/drive-link
+  - Body: { drive_link } (string URL or null to clear). Requires `phase1` page access (Client Relation) specifically — like the old upload/delete endpoints, this is not gated by the client's current stage via `requireClientPhase`, so Client Relation can still update the link even after the client has graduated to `phase2`/`phase3`. Any other role that can currently view the client (via `requireClientPhase` on `GET /clients/:id`) can see and open the link, but not change it.
 
 Engagements
 - POST /clients/:id/engagements
@@ -167,7 +162,7 @@ Roles & Permissions (migration 007 added roles as an enum, migration 008 added t
   - The only way to create a user account — there is no public self-registration endpoint.
 
 - PUT /users/:id
-  - Requires `system_admin` page access. Body: any subset of { role_id, is_active } to update. Returns the updated resource (no password data), 400 if `role_id` doesn't exist, 404 if the user isn't found.
+  - Requires `system_admin` page access. Body: any subset of { name, email, role_id, is_active } to update. Returns the updated resource (no password data), 400 if `name`/`email` is blank or `role_id` doesn't exist, 409 if `email` is already registered to a different user, 404 if the user isn't found.
 
 - POST /users/:id/reset-password
   - Requires `system_admin` page access. Body: { new_password } (min 8 chars)

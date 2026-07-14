@@ -4,11 +4,9 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const multer = require('multer');
 const db = require('./database');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const allowedOrigin = process.env.FRONTEND_ORIGIN;
 app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
@@ -153,6 +151,7 @@ function requireClientPhase(resolveClientId) {
       if (!(await roleHasPage(req.user.role_id, rows[0].stage))) {
         return res.status(403).json({ error: 'Not permitted for this phase' });
       }
+      req.clientStage = rows[0].stage;
       next();
     } catch (err) {
       console.error(err);
@@ -312,11 +311,7 @@ app.get('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, r
     const appointmentsQ = 'SELECT * FROM appointments WHERE client_id=$1 ORDER BY scheduled_at ASC';
     const { rows: appointments } = await db.query(appointmentsQ, [id]);
 
-    const documentsQ = `SELECT id, client_id, file_name, mime_type, file_size, uploaded_by, created_at
-                         FROM client_documents WHERE client_id=$1 ORDER BY created_at DESC`;
-    const { rows: documents } = await db.query(documentsQ, [id]);
-
-    res.json({ client, notes, engagements, companies, appointments, documents });
+    res.json({ client, notes, engagements, companies, appointments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch client details' });
@@ -343,7 +338,7 @@ app.post('/clients', async (req, res) => {
 
 app.put('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const id = Number(req.params.id);
-  const fields = ['contact_name','email','phone','status','stage','service_consultation','service_investment','service_business_solutions'];
+  const fields = ['contact_name','email','phone','status','stage','service_consultation','service_investment','service_business_solutions','contract_price','payment_type'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -398,18 +393,21 @@ app.post('/clients/:id/notes', requireClientPhase(resolveClientIdDirect), async 
 app.post('/clients/:id/companies', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const clientId = Number(req.params.id);
   const {
-    name, region, city, country, commercial_registration_number, vat_number, national_address,
+    name, region, city, country, commercial_registration_number, vat_number,
     industry, briefing, contact_person_name, additional_phone_number
   } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
+  if (req.clientStage === 'phase1' && !(briefing || '').trim()) {
+    return res.status(400).json({ error: 'briefing required' });
+  }
   try {
     const q = `INSERT INTO companies (
-                 client_id, name, region, city, country, commercial_registration_number, vat_number, national_address,
+                 client_id, name, region, city, country, commercial_registration_number, vat_number,
                  industry, briefing, contact_person_name, additional_phone_number
                )
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`;
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`;
     const { rows } = await db.query(q, [
-      clientId, name, region || null, city || null, country || null, commercial_registration_number || null, vat_number || null, national_address || null,
+      clientId, name, region || null, city || null, country || null, commercial_registration_number || null, vat_number || null,
       industry || null, briefing || null, contact_person_name || null, additional_phone_number || null
     ]);
     res.status(201).json(rows[0]);
@@ -421,7 +419,10 @@ app.post('/clients/:id/companies', requireClientPhase(resolveClientIdDirect), as
 
 app.put('/companies/:id', requireClientPhase(resolveClientIdViaCompany), async (req, res) => {
   const id = Number(req.params.id);
-  const fields = ['name','region','city','country','commercial_registration_number','vat_number','national_address','industry','briefing','contact_person_name','additional_phone_number'];
+  if (req.clientStage === 'phase1' && Object.prototype.hasOwnProperty.call(req.body, 'briefing') && !(req.body.briefing || '').trim()) {
+    return res.status(400).json({ error: 'briefing required' });
+  }
+  const fields = ['name','region','city','country','commercial_registration_number','vat_number','industry','briefing','contact_person_name','additional_phone_number'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -548,55 +549,22 @@ app.delete('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment
   }
 });
 
-// Documents (listed as part of the GET /clients/:id bundle; upload/delete restricted to Client
-// Relation regardless of the client's current stage, download available to whoever can currently
-// view the client, matching requireClientPhase everywhere else).
-app.post('/clients/:id/documents', requirePage('phase1'), upload.single('file'), async (req, res) => {
-  const clientId = Number(req.params.id);
-  if (!req.file) return res.status(400).json({ error: 'file required' });
-  try {
-    const q = `INSERT INTO client_documents (client_id, file_name, mime_type, file_size, file_data, uploaded_by)
-               VALUES ($1,$2,$3,$4,$5,$6)
-               RETURNING id, client_id, file_name, mime_type, file_size, uploaded_by, created_at`;
-    const { rows } = await db.query(q, [
-      clientId, req.file.originalname, req.file.mimetype, req.file.size, req.file.buffer, req.user.sub
-    ]);
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to upload document' });
-  }
-});
-
-app.get('/clients/:id/documents/:docId/download', requireClientPhase(resolveClientIdDirect), async (req, res) => {
-  const docId = Number(req.params.docId);
+// Drive link (a single Google Drive URL per client, editable by Client Relation regardless of the
+// client's current stage — same permission shape the old document upload/delete endpoints used —
+// visible to whoever can currently view the client, via the GET /clients/:id bundle).
+app.put('/clients/:id/drive-link', requirePage('phase1'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { drive_link } = req.body;
   try {
     const { rows } = await db.query(
-      'SELECT file_name, mime_type, file_data FROM client_documents WHERE id=$1 AND client_id=$2',
-      [docId, Number(req.params.id)]
+      'UPDATE clients SET drive_link=$1 WHERE id=$2 RETURNING id, drive_link',
+      [drive_link || null, id]
     );
-    if (!rows[0]) return res.status(404).json({ error: 'Document not found' });
-    const doc = rows[0];
-    res.set('Content-Type', doc.mime_type);
-    res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.file_name)}"`);
-    res.send(doc.file_data);
+    if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to download document' });
-  }
-});
-
-app.delete('/clients/:id/documents/:docId', requirePage('phase1'), async (req, res) => {
-  try {
-    const { rows } = await db.query(
-      'DELETE FROM client_documents WHERE id=$1 AND client_id=$2 RETURNING id',
-      [Number(req.params.docId), Number(req.params.id)]
-    );
-    if (!rows[0]) return res.status(404).json({ error: 'Document not found' });
-    res.status(204).end();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to delete document' });
+    res.status(500).json({ error: 'Failed to update drive link' });
   }
 });
 
@@ -701,7 +669,7 @@ app.post('/users', requirePage('system_admin'), async (req, res) => {
 
 app.put('/users/:id', requirePage('system_admin'), async (req, res) => {
   const id = Number(req.params.id);
-  const fields = ['role_id', 'is_active'];
+  const fields = ['name', 'email', 'role_id', 'is_active'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -714,6 +682,16 @@ app.put('/users/:id', requirePage('system_admin'), async (req, res) => {
   }
   if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
   try {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'name') && !String(req.body.name).trim()) {
+      return res.status(400).json({ error: 'name required' });
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'email')) {
+      if (!String(req.body.email).trim()) return res.status(400).json({ error: 'email required' });
+      const { rows: existing } = await db.query(
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id <> $2', [req.body.email, id]
+      );
+      if (existing[0]) return res.status(409).json({ error: 'Email already registered' });
+    }
     if (Object.prototype.hasOwnProperty.call(req.body, 'role_id')) {
       const { rows: roleRows } = await db.query('SELECT 1 FROM roles WHERE id=$1', [req.body.role_id]);
       if (!roleRows[0]) return res.status(400).json({ error: 'role_id does not exist' });

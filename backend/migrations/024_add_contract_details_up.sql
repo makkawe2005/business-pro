@@ -1,0 +1,7 @@
+BEGIN;
+
+ALTER TABLE clients
+  ADD COLUMN IF NOT EXISTS contract_price VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS payment_type VARCHAR(255);
+
+COMMIT;

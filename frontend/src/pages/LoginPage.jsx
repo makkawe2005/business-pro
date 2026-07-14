@@ -57,12 +57,16 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <form className="login-card" onSubmit={handleSubmit}>
-        <div className="login-brand">
-          <div className="login-brand-text">
-            <img className="brand-mark" src={logo} alt="Business Pro" />
-            <span>Business Pro</span>
+      <div className="login-card login-card-split">
+        <div className="login-brand-panel">
+          <img className="brand-mark" src={logo} alt="Business Pro" />
+          <div className="login-brand-panel-text">
+            <strong>Business Pro</strong>
+            <small>{t('nav.brandTagline')}</small>
           </div>
+        </div>
+
+        <form className="login-form" onSubmit={handleSubmit}>
           <button
             type="button"
             className="login-lang-toggle"
@@ -72,62 +76,62 @@ export function LoginPage() {
           >
             <GlobeIcon /> {nextLangCode}
           </button>
-        </div>
 
-        <div>
-          <h1>{t('auth.signInTitle')}</h1>
-          <p className="subtitle">{t('auth.signInSubtitle')}</p>
-        </div>
-
-        {error && <p className="error-message" style={{ color: error.color, display: 'block' }}>{error.message}</p>}
-
-        <div className="field-row">
-          <label htmlFor="email-input">{t('auth.emailLabel')}</label>
-          <input
-            id="email-input"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            dir="ltr"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className="field-row">
-          <label htmlFor="password-input">{t('auth.passwordLabel')}</label>
-          <div className="password-input-wrapper">
-            <input
-              id="password-input"
-              type={showPassword ? 'text' : 'password'}
-              placeholder={t('auth.passwordPlaceholder')}
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword((v) => !v)}
-              title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-            >
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
+          <div>
+            <h1>{t('auth.signInTitle')}</h1>
+            <p className="subtitle">{t('auth.signInSubtitle')}</p>
           </div>
-        </div>
 
-        <label className="remember-me-row">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-          <span>{t('auth.rememberMe')}</span>
-        </label>
+          {error && <p className="error-message" style={{ color: error.color, display: 'block' }}>{error.message}</p>}
 
-        <button className="button primary" type="submit" disabled={submitting}>
-          {t('auth.signInTitle')}
-        </button>
-      </form>
+          <div className="field-row">
+            <label htmlFor="email-input">{t('auth.emailLabel')}</label>
+            <input
+              id="email-input"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              dir="ltr"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="field-row">
+            <label htmlFor="password-input">{t('auth.passwordLabel')}</label>
+            <div className="password-input-wrapper">
+              <input
+                id="password-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder={t('auth.passwordPlaceholder')}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                title={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
+              >
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+          </div>
+
+          <label className="remember-me-row">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            <span>{t('auth.rememberMe')}</span>
+          </label>
+
+          <button className="button primary" type="submit" disabled={submitting}>
+            {t('auth.signInTitle')}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

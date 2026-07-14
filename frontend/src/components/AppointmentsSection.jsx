@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 
@@ -13,25 +15,21 @@ const meetingTypeKeys = {
   'In-Person': 'appointments.meetingTypeInPerson'
 };
 
-// Chrome's native date picker takes its calendar language from the browser's own
-// display-language setting, not the page's `lang` attribute — there's no way to force it to
-// stay in English from the page, so this is a plain typed field instead of type="date".
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-function isValidDate(match) {
-  const [, yearStr, monthStr, dayStr] = match;
-  const year = Number(yearStr);
-  const month = Number(monthStr);
-  const day = Number(dayStr);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
-  const date = new Date(year, month - 1, day);
-  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+// react-datepicker renders its own calendar UI in English regardless of the browser's display
+// language — unlike the native input[type="date"] picker, which takes its calendar language from
+// the OS/browser setting with no way to force it to stay in English from the page.
+function toDateOnlyString(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCancel, onRemove }) {
   const { t } = useI18n();
   const showToast = useToastStore((s) => s.showToast);
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledDate, setScheduledDate] = useState(null);
+  const [scheduledTime, setScheduledTime] = useState('');
   const [title, setTitle] = useState('');
   const [agenda, setAgenda] = useState('');
   const [meetingType, setMeetingType] = useState('Remote');
@@ -39,19 +37,14 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
   const [meetingLink, setMeetingLink] = useState('');
 
   function submit() {
-    const trimmedScheduledAt = scheduledAt.trim();
     const trimmedTitle = title.trim();
-    if (!trimmedScheduledAt || !trimmedTitle) {
+    if (!scheduledDate || !scheduledTime || !trimmedTitle) {
       showToast(t('appointments.fieldsRequired'), 'error');
       return;
     }
-    const match = trimmedScheduledAt.match(DATE_PATTERN);
-    if (!match || !isValidDate(match)) {
-      showToast(t('appointments.invalidDateFormat'), 'error');
-      return;
-    }
-    onAdd(`${trimmedScheduledAt}T00:00`, trimmedTitle, agenda.trim(), meetingType, location.trim(), meetingLink.trim());
-    setScheduledAt('');
+    onAdd(`${toDateOnlyString(scheduledDate)}T${scheduledTime}`, trimmedTitle, agenda.trim(), meetingType, location.trim(), meetingLink.trim());
+    setScheduledDate(null);
+    setScheduledTime('');
     setTitle('');
     setAgenda('');
     setMeetingType('Remote');
@@ -66,7 +59,9 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
           <p style={{ color: '#6b7280', margin: 0 }}>{t('appointments.empty')}</p>
         ) : (
           appointments.map((appt) => {
-            const when = appt.scheduled_at ? new Date(appt.scheduled_at).toLocaleDateString('en-US') : '';
+            const when = appt.scheduled_at
+              ? `${new Date(appt.scheduled_at).toLocaleDateString('en-US')} ${new Date(appt.scheduled_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+              : '';
             return (
               <div className="note-item" key={appt.id}>
                 <p><strong>{appt.title}</strong> — {when} · {t(statusKeys[appt.status] || 'appointments.statusScheduled')} · {t(meetingTypeKeys[appt.meeting_type] || 'appointments.meetingTypeRemote')}</p>
@@ -99,13 +94,21 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
         )}
       </div>
       <div className="company-form-grid">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '10px', gridColumn: '1 / -1' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', gridColumn: '1 / -1' }}>
+          <DatePicker
+            selected={scheduledDate}
+            onChange={setScheduledDate}
+            dateFormat="yyyy-MM-dd"
+            placeholderText="YYYY-MM-DD"
+            className="appointment-date-input"
+            wrapperClassName="appointment-date-wrapper"
+          />
           <input
-            type="text"
+            type="time"
             dir="ltr"
-            placeholder="YYYY-MM-DD"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
+            aria-label={t('appointments.timeLabel')}
+            value={scheduledTime}
+            onChange={(e) => setScheduledTime(e.target.value)}
           />
           <input
             type="text"

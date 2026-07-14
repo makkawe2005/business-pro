@@ -18,6 +18,7 @@ export function ServicesSection({ client, onToggle, canEdit = true }) {
             style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: canEdit ? 'pointer' : 'default' }}
           >
             <input
+              className="service-checkbox"
               type="checkbox"
               checked={!!client?.[field]}
               disabled={!canEdit}

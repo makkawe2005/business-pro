@@ -25,6 +25,10 @@ function formatRange(start, end) {
   return `${start.toLocaleDateString('en-US', opts)} – ${end.toLocaleDateString('en-US', opts)}`;
 }
 
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
 export function CalendarPage() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -113,6 +117,7 @@ export function CalendarPage() {
                   <div className="calendar-appt-main">
                     <div className="client">{appt.contact_name}</div>
                     <div className="title">{appt.title}</div>
+                    <div className="calendar-appt-time">{formatTime(new Date(appt.scheduled_at))}</div>
                     {appt.meeting_type === 'In-Person' && appt.location && (
                       <div className="location">{appt.location}</div>
                     )}

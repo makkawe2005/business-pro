@@ -15,7 +15,8 @@ import { CompanySection } from '../components/CompanySection';
 import { ServicesSection } from '../components/ServicesSection';
 import { NotesSection } from '../components/NotesSection';
 import { AppointmentsSection } from '../components/AppointmentsSection';
-import { DocumentsSection } from '../components/DocumentsSection';
+import { DriveLinkSection } from '../components/DriveLinkSection';
+import { ContractDetailsSection } from '../components/ContractDetailsSection';
 import { PipelineCard } from '../components/PipelineCard';
 
 const emptyClientForm = { contact_name: '', email: '', phone: '' };
@@ -32,7 +33,7 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
   const location = useLocation();
   const currentUser = useAuthStore((s) => s.user);
   const showToast = useToastStore((s) => s.showToast);
-  const canUploadDocuments = usePermissionsStore((s) => s.pageKeys.includes('phase1'));
+  const canEditDriveLink = usePermissionsStore((s) => s.pageKeys.includes('phase1'));
 
   const CLIENTS_PAGE_SIZE = 5;
 
@@ -42,6 +43,7 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
   const [clientsPage, setClientsPage] = useState(0);
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [detail, setDetail] = useState(null); // { client, notes, companies }
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
   const [showAddClientForm, setShowAddClientForm] = useState(false);
   const [editingClientId, setEditingClientId] = useState(null);
@@ -371,54 +373,38 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
     }
   }
 
-  async function handleUploadDocument(file) {
+  async function handleSaveDriveLink(link) {
     if (selectedClientId === null) {
       showToast(t('common.selectClientFirst'), 'error');
       return;
     }
-    const formData = new FormData();
-    formData.append('file', file);
     try {
-      const res = await apiFetch(`/clients/${selectedClientId}/documents`, { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Failed to upload document');
+      const res = await apiFetch(`/clients/${selectedClientId}/drive-link`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drive_link: link })
+      });
+      if (!res.ok) throw new Error('Failed to save drive link');
       await selectClient(selectedClientId);
-      showToast(t('documents.uploadSuccess'));
+      showToast(t('driveLink.saveSuccess'));
     } catch (err) {
       console.error(err);
-      showToast(t('documents.uploadFailed'), 'error');
+      showToast(t('driveLink.saveFailed'), 'error');
     }
   }
 
-  async function handleDownloadDocument(doc) {
+  async function handleSaveContractDetail(field, value) {
+    if (selectedClientId === null) return;
     try {
-      const res = await apiFetch(`/clients/${selectedClientId}/documents/${doc.id}/download`);
-      if (!res.ok) throw new Error('Failed to download document');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = doc.file_name;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      showToast(t('documents.downloadFailed'), 'error');
-    }
-  }
-
-  async function handleRemoveDocument(id) {
-    const confirmed = window.confirm(t('documents.confirmRemove'));
-    if (!confirmed) return;
-    try {
-      const res = await apiFetch(`/clients/${selectedClientId}/documents/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to remove document');
+      const res = await apiFetch(`/clients/${selectedClientId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+      if (!res.ok) throw new Error('Failed to save contract details');
       await selectClient(selectedClientId);
-      showToast(t('documents.removeSuccess'));
+      showToast(t('contractDetails.saveSuccess'));
     } catch (err) {
       console.error(err);
-      showToast(t('documents.removeFailed'), 'error');
+      showToast(t('contractDetails.saveFailed'), 'error');
     }
   }
 
@@ -434,7 +420,6 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
       country: company.country || '',
       commercial_registration_number: company.commercial_registration_number || '',
       vat_number: company.vat_number || '',
-      national_address: company.national_address || '',
       industry: company.industry || '',
       briefing: company.briefing || '',
       contact_person_name: company.contact_person_name || '',
@@ -456,6 +441,15 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
       showToast(t('companies.nameRequired'), 'error');
       return;
     }
+    if (stage === 'phase1' && !companyFormValues.briefing.trim()) {
+      showToast(t('companies.briefingRequired'), 'error');
+      return;
+    }
+    const additionalPhone = companyFormValues.additional_phone_number.trim();
+    if (additionalPhone && !/^[1-9]\d{8}$/.test(additionalPhone)) {
+      showToast(t('companies.additionalPhoneInvalid'), 'error');
+      return;
+    }
     if (selectedClientId === null) {
       showToast(t('common.selectClientFirst'), 'error');
       return;
@@ -467,7 +461,6 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
       country: companyFormValues.country.trim(),
       commercial_registration_number: companyFormValues.commercial_registration_number.trim(),
       vat_number: companyFormValues.vat_number.trim(),
-      national_address: companyFormValues.national_address.trim(),
       industry: companyFormValues.industry,
       briefing: companyFormValues.briefing.trim(),
       contact_person_name: companyFormValues.contact_person_name.trim(),
@@ -607,16 +600,15 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
   const notes = detail?.notes || [];
   const companies = detail?.companies || [];
   const appointments = detail?.appointments || [];
-  const documents = detail?.documents || [];
 
   return (
     <>
-      <div className="main-grid">
+      <div className={`main-grid${mobileDetailOpen ? ' mobile-detail-open' : ''}`}>
         <section className="panel panel-left">
           <div className="panel-header">
             <h2>{t('directory.title')}</h2>
             {canAddClient && (
-              <button className="button primary" type="button" onClick={openAddClientForm}>{t('directory.addClient')}</button>
+              <button className="button primary" type="button" onClick={() => { openAddClientForm(); setMobileDetailOpen(true); }}>{t('directory.addClient')}</button>
             )}
           </div>
           {statusFilterOptions.length > 0 && (
@@ -653,7 +645,11 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
             />
           </div>
           <div className="client-list-wrapper">
-            <ClientList clients={pagedClients} selectedClientId={selectedClientId} onSelect={selectClient} />
+            <ClientList
+              clients={pagedClients}
+              selectedClientId={selectedClientId}
+              onSelect={(id) => { selectClient(id); setMobileDetailOpen(true); }}
+            />
           </div>
           {clientsPageCount > 1 && (
             <div className="pagination-row">
@@ -689,6 +685,14 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
         <section className="panel panel-right">
           <div className="panel-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                type="button"
+                className="mobile-back-button"
+                onClick={() => setMobileDetailOpen(false)}
+                aria-label={t('directory.title')}
+              >
+                ‹ {t('directory.title')}
+              </button>
               <h2 style={{ margin: 0 }}>{t('details.title')}</h2>
             </div>
           </div>
@@ -741,6 +745,12 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
                 <ServicesSection client={client} onToggle={toggleService} canEdit={canEditClient} />
               </CollapsibleSection>
 
+              {(stage === 'phase2' || stage === 'phase3') && (
+                <CollapsibleSection title={t('contractDetails.title')} defaultCollapsed>
+                  <ContractDetailsSection client={client} onSave={handleSaveContractDetail} />
+                </CollapsibleSection>
+              )}
+
               <CollapsibleSection title={t('companies.title')} defaultCollapsed>
                 <CompanySection
                   companies={companies}
@@ -753,22 +763,23 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
                   onSubmit={submitCompany}
                   onCancel={cancelCompanyForm}
                   canEdit={canEditClient}
+                  requireBriefing={stage === 'phase1'}
                 />
               </CollapsibleSection>
 
-              <CollapsibleSection title={t('documents.title')} defaultCollapsed>
-                <DocumentsSection
-                  documents={documents}
-                  canUpload={canUploadDocuments}
-                  onUpload={handleUploadDocument}
-                  onDownload={handleDownloadDocument}
-                  onRemove={handleRemoveDocument}
+              <CollapsibleSection title={t('driveLink.title')} defaultCollapsed>
+                <DriveLinkSection
+                  driveLink={client?.drive_link}
+                  canEdit={canEditDriveLink}
+                  onSave={handleSaveDriveLink}
                 />
               </CollapsibleSection>
 
-              <CollapsibleSection title={t('notes.title')} defaultCollapsed>
-                <NotesSection notes={notes} onAdd={handleAddNote} />
-              </CollapsibleSection>
+              {stage !== 'phase1' && (
+                <CollapsibleSection title={t('notes.title')} defaultCollapsed>
+                  <NotesSection notes={notes} onAdd={handleAddNote} />
+                </CollapsibleSection>
+              )}
 
               {useAppointments && (
                 <CollapsibleSection title={t('appointments.title')} defaultCollapsed>

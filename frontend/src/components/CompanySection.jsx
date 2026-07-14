@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n/useI18n';
-import { regionOptions, cityOptions, countryOptions, industryOptions } from '../data/companyOptions';
+import { regionOptions, cityOptions, countryOptions, industryOptions, countryPhonePrefixes } from '../data/companyOptions';
 
 function CompanyFieldRow({ label, value }) {
   return (
@@ -8,6 +8,12 @@ function CompanyFieldRow({ label, value }) {
       <div>{value || '–'}</div>
     </div>
   );
+}
+
+function formatAdditionalPhone(company) {
+  if (!company.additional_phone_number) return '';
+  const prefix = countryPhonePrefixes[company.country] || '';
+  return prefix ? `${prefix} ${company.additional_phone_number}` : company.additional_phone_number;
 }
 
 function CompanyCard({ company, onEdit, onRemove, canEdit }) {
@@ -31,8 +37,7 @@ function CompanyCard({ company, onEdit, onRemove, canEdit }) {
         <CompanyFieldRow label={t('companies.crLabel')} value={company.commercial_registration_number} />
         <CompanyFieldRow label={t('companies.vat')} value={company.vat_number} />
         <CompanyFieldRow label={t('companies.contactPersonLabel')} value={company.contact_person_name} />
-        <CompanyFieldRow label={t('companies.additionalPhoneLabel')} value={company.additional_phone_number} />
-        <CompanyFieldRow label={t('companies.address')} value={company.national_address} />
+        <CompanyFieldRow label={t('companies.additionalPhoneLabel')} value={formatAdditionalPhone(company)} />
       </div>
       {company.briefing && (
         <div className="briefing-block">
@@ -54,7 +59,8 @@ export function CompanySection({
   onRemove,
   onSubmit,
   onCancel,
-  canEdit = true
+  canEdit = true,
+  requireBriefing = false
 }) {
   const { t } = useI18n();
 
@@ -113,25 +119,28 @@ export function CompanySection({
               value={values.contact_person_name}
               onChange={(e) => onFieldChange('contact_person_name', e.target.value)}
             />
-            <input
-              placeholder={t('companies.additionalPhonePlaceholder')}
-              value={values.additional_phone_number}
-              onChange={(e) => onFieldChange('additional_phone_number', e.target.value)}
-            />
+            <div className="phone-prefix-input">
+              <span className="phone-prefix-badge">{countryPhonePrefixes[values.country] || '+···'}</span>
+              <input
+                type="tel"
+                dir="ltr"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder={t('companies.additionalPhonePlaceholder')}
+                value={values.additional_phone_number}
+                onChange={(e) => onFieldChange('additional_phone_number', e.target.value.replace(/\D/g, '').slice(0, 9))}
+              />
+            </div>
             <select value={values.industry} onChange={(e) => onFieldChange('industry', e.target.value)}>
               <option value="">{t('companies.industry')}</option>
               {industryOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{t(opt.key)}</option>
               ))}
             </select>
-            <input
-              placeholder={t('companies.address')}
-              value={values.national_address}
-              onChange={(e) => onFieldChange('national_address', e.target.value)}
-            />
             <textarea
-              placeholder={t('companies.briefingPlaceholder')}
+              placeholder={requireBriefing ? `${t('companies.briefingPlaceholder')} *` : t('companies.briefingPlaceholder')}
               rows={3}
+              required={requireBriefing}
               style={{ gridColumn: '1 / -1' }}
               value={values.briefing}
               onChange={(e) => onFieldChange('briefing', e.target.value)}

@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS national_address VARCHAR(255);
+
+COMMIT;

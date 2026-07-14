@@ -15,6 +15,8 @@ export function UsersPage() {
   const [form, setForm] = useState(emptyForm(''));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editValues, setEditValues] = useState({ name: '', email: '' });
 
   async function loadRoles() {
     try {
@@ -86,6 +88,42 @@ export function UsersPage() {
     } catch (err) {
       console.error(err);
       showToast(t('users.roleUpdateFailed'), 'error');
+    }
+  }
+
+  function startEditUser(u) {
+    setEditingUserId(u.id);
+    setEditValues({ name: u.name, email: u.email });
+  }
+
+  function cancelEditUser() {
+    setEditingUserId(null);
+    setEditValues({ name: '', email: '' });
+  }
+
+  async function saveEditUser(id) {
+    const name = editValues.name.trim();
+    const email = editValues.email.trim();
+    if (!name || !email) {
+      showToast(t('users.fieldsRequired'), 'error');
+      return;
+    }
+    try {
+      const res = await apiFetch(`/users/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        showToast(body.error ? translateServerError(body.error) : t('users.editFailed'), 'error');
+        return;
+      }
+      setEditingUserId(null);
+      await loadUsers();
+      showToast(t('users.editSuccess'));
+    } catch (err) {
+      console.error(err);
+      showToast(t('users.editFailed'), 'error');
     }
   }
 
@@ -209,30 +247,72 @@ export function UsersPage() {
                 <td colSpan={5} style={{ color: '#6b7280', whiteSpace: 'normal' }}>{t('users.empty')}</td>
               </tr>
             ) : (
-              filteredUsers.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td>
-                    <select className="select-input" value={u.role_id} onChange={(e) => changeRole(u.id, e.target.value)}>
-                      {roles.map((role) => (
-                        <option key={role.id} value={role.id}>{role.name}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>{u.is_active ? t('users.statusActive') : t('users.statusInactive')}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <button className="button neutral" type="button" onClick={() => toggleActive(u.id, u.is_active)}>
-                        {u.is_active ? t('users.deactivate') : t('users.activate')}
-                      </button>
-                      <button className="button neutral" type="button" onClick={() => resetPassword(u.id)}>
-                        {t('users.resetPassword')}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              filteredUsers.map((u) => {
+                const isEditing = editingUserId === u.id;
+                return (
+                  <tr key={u.id}>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          className="select-input"
+                          value={editValues.name}
+                          onChange={(e) => setEditValues((prev) => ({ ...prev, name: e.target.value }))}
+                        />
+                      ) : (
+                        u.name
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          dir="ltr"
+                          className="select-input"
+                          value={editValues.email}
+                          onChange={(e) => setEditValues((prev) => ({ ...prev, email: e.target.value }))}
+                        />
+                      ) : (
+                        u.email
+                      )}
+                    </td>
+                    <td>
+                      <select className="select-input" value={u.role_id} onChange={(e) => changeRole(u.id, e.target.value)}>
+                        {roles.map((role) => (
+                          <option key={role.id} value={role.id}>{role.name}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{u.is_active ? t('users.statusActive') : t('users.statusInactive')}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {isEditing ? (
+                          <>
+                            <button className="button primary" type="button" onClick={() => saveEditUser(u.id)}>
+                              {t('common.saveChanges')}
+                            </button>
+                            <button className="button neutral" type="button" onClick={cancelEditUser}>
+                              {t('common.cancel')}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button className="button neutral" type="button" onClick={() => startEditUser(u)}>
+                              {t('common.editShort')}
+                            </button>
+                            <button className="button neutral" type="button" onClick={() => toggleActive(u.id, u.is_active)}>
+                              {u.is_active ? t('users.deactivate') : t('users.activate')}
+                            </button>
+                            <button className="button neutral" type="button" onClick={() => resetPassword(u.id)}>
+                              {t('users.resetPassword')}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
