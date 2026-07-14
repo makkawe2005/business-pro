@@ -39,6 +39,10 @@ export function PublicRegistrationPage() {
       setError(t('publicRegistration.fieldsRequired'));
       return;
     }
+    if (!/^[1-9]\d{8}$/.test(form.phone.trim())) {
+      setError(t('publicRegistration.phoneInvalid'));
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -46,7 +50,7 @@ export function PublicRegistrationPage() {
       const res = await fetch(`${API_BASE}/public/client-registrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, phone: `+966${form.phone.trim()}` })
       });
       if (!res.ok) {
         setError(t('publicRegistration.submitFailed'));
@@ -105,13 +109,19 @@ export function PublicRegistrationPage() {
 
             <div className="field-row">
               <label htmlFor="phone">{t('common.phone')}</label>
-              <input
-                id="phone"
-                type="text"
-                dir="ltr"
-                value={form.phone}
-                onChange={(e) => setField('phone', e.target.value)}
-              />
+              <div className="phone-prefix-input">
+                <span className="phone-prefix-badge">+966</span>
+                <input
+                  id="phone"
+                  type="tel"
+                  dir="ltr"
+                  inputMode="numeric"
+                  maxLength={9}
+                  placeholder="5XXXXXXXX"
+                  value={form.phone}
+                  onChange={(e) => setField('phone', e.target.value.replace(/\D/g, '').slice(0, 9))}
+                />
+              </div>
             </div>
 
             <div className="field-row">

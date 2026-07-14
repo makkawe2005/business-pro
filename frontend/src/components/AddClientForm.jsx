@@ -30,14 +30,19 @@ export function AddClientForm({ title, values, onChange, onCancel, onSave, saveL
         </div>
         <div className="field-row">
           <label htmlFor="new-client-phone">{t('common.phone')}</label>
-          <input
-            id="new-client-phone"
-            type="tel"
-            dir="ltr"
-            placeholder="+966-000-000-0000"
-            value={values.phone}
-            onChange={(e) => onChange('phone', e.target.value)}
-          />
+          <div className="phone-prefix-input">
+            <span className="phone-prefix-badge">+966</span>
+            <input
+              id="new-client-phone"
+              type="tel"
+              dir="ltr"
+              inputMode="numeric"
+              maxLength={9}
+              placeholder="5XXXXXXXX"
+              value={values.phone}
+              onChange={(e) => onChange('phone', e.target.value.replace(/\D/g, '').slice(0, 9))}
+            />
+          </div>
         </div>
       </div>
       <div className="form-actions">

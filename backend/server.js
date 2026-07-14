@@ -79,6 +79,9 @@ app.post('/public/client-registrations', publicRegistrationLimiter, async (req, 
   const required = { contact_name, phone, email, company_name, company_city, company_industry, company_website, company_briefing };
   const missing = Object.entries(required).filter(([, v]) => !v || !String(v).trim()).map(([k]) => k);
   if (missing.length) return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
+  if (!/^\+966[1-9]\d{8}$/.test(phone)) {
+    return res.status(400).json({ error: 'phone must be a valid Saudi mobile number' });
+  }
 
   const client = await db.getClient();
   try {

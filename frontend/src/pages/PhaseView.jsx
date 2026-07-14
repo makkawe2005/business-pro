@@ -128,7 +128,8 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
       showToast(t('client.noneSelectedEdit'), 'error');
       return;
     }
-    setClientFormValues({ contact_name: client.contact_name, email: client.email, phone: client.phone });
+    const existingDigits = (client.phone || '').replace(/\D/g, '').replace(/^966/, '').slice(-9);
+    setClientFormValues({ contact_name: client.contact_name, email: client.email, phone: existingDigits });
     setEditingClientId(client.id);
     setShowAddClientForm(true);
   }
@@ -139,10 +140,15 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
       showToast(t('client.contactRequired'), 'error');
       return;
     }
+    const phoneDigits = clientFormValues.phone.trim();
+    if (phoneDigits && !/^[1-9]\d{8}$/.test(phoneDigits)) {
+      showToast(t('client.phoneInvalid'), 'error');
+      return;
+    }
     const payload = {
       contact_name: contact,
       email: clientFormValues.email.trim() || 'unknown@example.com',
-      phone: clientFormValues.phone.trim() || '-000-000-0000',
+      phone: phoneDigits ? `+966${phoneDigits}` : '-000-000-0000',
       stage
     };
     try {
