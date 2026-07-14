@@ -20,19 +20,17 @@ const INDUSTRY_COLORS = {
 const INDUSTRY_LABEL_KEYS = Object.fromEntries(industryOptions.map((opt) => [opt.value, opt.key]));
 const FALLBACK_INDUSTRY_COLOR = '#94a3b8';
 
-const COLUMN_ORDER = ['prospect', 'reschedule', 'sales', 'legalFinance', 'inactive'];
+const COLUMN_ORDER = ['prospect', 'reschedule', 'sales', 'legalFinance'];
 
 const STATUS_META = {
   Prospect: { labelKey: 'dashboard.columnProspect', color: 'var(--bp-navy)' },
   Reschedule: { labelKey: 'dashboard.columnReschedule', color: 'var(--bp-warning)' },
   Active: { labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' },
-  Finalizing: { labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' },
-  Inactive: { labelKey: 'dashboard.statusInactive', color: 'var(--bp-muted)' }
+  Finalizing: { labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' }
 };
 
 const STATUS_FILTER_OPTIONS = [
   { status: 'Prospect', labelKey: 'dashboard.columnProspect', color: 'var(--bp-navy)' },
-  { status: 'Inactive', labelKey: 'dashboard.statusInactive', color: 'var(--bp-muted)' },
   { status: 'Reschedule', labelKey: 'dashboard.columnReschedule', color: 'var(--bp-warning)' },
   { status: 'Active', labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' }
 ];
@@ -41,8 +39,7 @@ const STATUS_BARS = [
   { status: 'Prospect', labelKey: 'dashboard.columnProspect', color: 'var(--bp-navy)' },
   { status: 'Reschedule', labelKey: 'dashboard.columnReschedule', color: 'var(--bp-warning)' },
   { status: 'Active', labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' },
-  { status: 'Finalizing', labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' },
-  { status: 'Inactive', labelKey: 'dashboard.statusInactive', color: 'var(--bp-muted)' }
+  { status: 'Finalizing', labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' }
 ];
 
 const SERVICE_BARS = [

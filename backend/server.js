@@ -203,8 +203,7 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
       { key: 'prospect', stage: 'phase1', status: 'Prospect' },
       { key: 'reschedule', stage: 'phase1', status: 'Reschedule' },
       { key: 'sales', stage: 'phase2', status: 'Active' },
-      { key: 'legalFinance', stage: 'phase3', status: 'Finalizing' },
-      { key: 'inactive', stage: null, status: 'Inactive' }
+      { key: 'legalFinance', stage: 'phase3', status: 'Finalizing' }
     ];
     const columns = [];
     for (const def of columnDefs) {
@@ -222,8 +221,10 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
       columns.push({ key: def.key, clients: rows });
     }
 
-    const { rows: statusRows } = await db.query('SELECT status, COUNT(*)::int AS count FROM clients GROUP BY status');
-    const statusCounts = { Prospect: 0, Reschedule: 0, Active: 0, Finalizing: 0, Inactive: 0 };
+    const { rows: statusRows } = await db.query(
+      `SELECT status, COUNT(*)::int AS count FROM clients WHERE status != 'Inactive' GROUP BY status`
+    );
+    const statusCounts = { Prospect: 0, Reschedule: 0, Active: 0, Finalizing: 0 };
     for (const row of statusRows) {
       if (Object.prototype.hasOwnProperty.call(statusCounts, row.status)) statusCounts[row.status] = row.count;
     }
@@ -234,7 +235,7 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
       JOIN LATERAL (
         SELECT industry FROM companies WHERE companies.client_id = c.id ORDER BY created_at ASC LIMIT 1
       ) comp ON true
-      WHERE comp.industry IS NOT NULL AND comp.industry != ''
+      WHERE c.status != 'Inactive' AND comp.industry IS NOT NULL AND comp.industry != ''
       GROUP BY comp.industry
       ORDER BY count DESC
     `);
@@ -245,6 +246,7 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
         COUNT(*) FILTER (WHERE service_investment)::int AS investment,
         COUNT(*) FILTER (WHERE service_business_solutions)::int AS "businessSolutions"
       FROM clients
+      WHERE status != 'Inactive'
     `);
     const serviceCounts = serviceRows[0];
 
