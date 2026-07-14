@@ -7,4 +7,11 @@ export default defineConfig({
   server: {
     host: true
   },
+  build: {
+    // The default CSS minifier rewrites `@media (max-width: Npx)` into the modern
+    // range syntax `@media (width <= Npx)`, which pre-16.4 iOS Safari doesn't
+    // understand — silently breaking every mobile-only style (e.g. the sidebar
+    // never hides). Disabling CSS minification keeps the source syntax intact.
+    cssMinify: false
+  },
 })
