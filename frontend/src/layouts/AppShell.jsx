@@ -74,6 +74,9 @@ export function AppShell() {
           {pageKeys.includes('calendar') && (
             <NavLink to="/calendar" className={navClass} onClick={closeMenu}>{t('nav.calendar')}</NavLink>
           )}
+          {pageKeys.includes('investors') && (
+            <NavLink to="/investors" className={navClass} onClick={closeMenu}>{t('nav.investors')}</NavLink>
+          )}
           {pageKeys.includes('system_admin') && (
             <div className="sidebar-nav-group">
               <button

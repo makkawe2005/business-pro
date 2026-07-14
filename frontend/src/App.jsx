@@ -8,6 +8,7 @@ import { PublicRegistrationPage } from './pages/PublicRegistrationPage';
 import { PhaseView } from './pages/PhaseView';
 import { DashboardPage } from './pages/DashboardPage';
 import { CalendarPage } from './pages/CalendarPage';
+import { InvestorsPage } from './pages/InvestorsPage';
 import { AdminPage } from './pages/AdminPage';
 import { UsersPage } from './pages/UsersPage';
 import { PermissionsPage } from './pages/PermissionsPage';
@@ -20,6 +21,7 @@ const PAGE_PRIORITY = [
   ['phase1', '/phase1'],
   ['phase2', '/phase2'],
   ['phase3', '/phase3'],
+  ['investors', '/investors'],
   ['system_admin', '/system-admin']
 ];
 
@@ -44,6 +46,9 @@ export default function App() {
             </Route>
             <Route element={<RequirePage pageKey="calendar" />}>
               <Route path="/calendar" element={<CalendarPage />} />
+            </Route>
+            <Route element={<RequirePage pageKey="investors" />}>
+              <Route path="/investors" element={<InvestorsPage />} />
             </Route>
             <Route element={<RequirePage pageKey="phase1" />}>
               <Route

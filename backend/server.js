@@ -389,6 +389,93 @@ app.post('/clients/:id/notes', requireClientPhase(resolveClientIdDirect), async 
   }
 });
 
+// Investors (standalone, not tied to the client pipeline/phases)
+const MOBILE_PATTERN = /^[1-9]\d{8}$/;
+
+app.get('/investors', requirePage('investors'), async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM investors ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch investors' });
+  }
+});
+
+app.get('/investors/:id', requirePage('investors'), async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM investors WHERE id=$1', [Number(req.params.id)]);
+    if (!rows[0]) return res.status(404).json({ error: 'Investor not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch investor' });
+  }
+});
+
+app.post('/investors', requirePage('investors'), async (req, res) => {
+  const { name, mobile, email, investor_type, company_name, nationality, national_id, notes, status } = req.body;
+  if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
+  if (!mobile || !MOBILE_PATTERN.test(mobile)) {
+    return res.status(400).json({ error: 'mobile must be 9 digits and not start with 0' });
+  }
+  try {
+    const q = `INSERT INTO investors (name, mobile, email, investor_type, company_name, nationality, national_id, notes, status, created_by)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`;
+    const { rows } = await db.query(q, [
+      name.trim(), mobile, email || null, investor_type || 'Individual', company_name || null,
+      nationality || null, national_id || null, notes || null, status || 'Prospect', req.user.sub
+    ]);
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add investor' });
+  }
+});
+
+app.put('/investors/:id', requirePage('investors'), async (req, res) => {
+  const id = Number(req.params.id);
+  const fields = ['name', 'mobile', 'email', 'investor_type', 'company_name', 'nationality', 'national_id', 'notes', 'status'];
+  const sets = [];
+  const values = [];
+  let idx = 1;
+  if (Object.prototype.hasOwnProperty.call(req.body, 'name') && !String(req.body.name).trim()) {
+    return res.status(400).json({ error: 'name required' });
+  }
+  if (Object.prototype.hasOwnProperty.call(req.body, 'mobile') && !MOBILE_PATTERN.test(req.body.mobile)) {
+    return res.status(400).json({ error: 'mobile must be 9 digits and not start with 0' });
+  }
+  for (const f of fields) {
+    if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+      sets.push(`${f} = $${idx}`);
+      values.push(req.body[f]);
+      idx++;
+    }
+  }
+  if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+  values.push(id);
+  const q = `UPDATE investors SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
+  try {
+    const { rows } = await db.query(q, values);
+    if (!rows[0]) return res.status(404).json({ error: 'Investor not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update investor' });
+  }
+});
+
+app.delete('/investors/:id', requirePage('investors'), async (req, res) => {
+  try {
+    const { rows } = await db.query('DELETE FROM investors WHERE id=$1 RETURNING id', [Number(req.params.id)]);
+    if (!rows[0]) return res.status(404).json({ error: 'Investor not found' });
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete investor' });
+  }
+});
+
 // Companies
 app.post('/clients/:id/companies', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const clientId = Number(req.params.id);
@@ -777,7 +864,7 @@ app.put('/roles/:id', requirePage('system_admin'), async (req, res) => {
 });
 
 // Permissions (role -> page access matrix)
-const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'system_admin'];
+const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'investors', 'system_admin'];
 
 app.get('/permissions/me', async (req, res) => {
   try {

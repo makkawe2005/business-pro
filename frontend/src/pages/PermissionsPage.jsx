@@ -3,7 +3,7 @@ import { apiFetch } from '../api/client';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 
-const PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'system_admin'];
+const PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'investors', 'system_admin'];
 
 export function PermissionsPage() {
   const { t } = useI18n();
@@ -71,6 +71,7 @@ export function PermissionsPage() {
               <th>{t('nav.phase2')}</th>
               <th>{t('nav.phase3')}</th>
               <th>{t('nav.calendar')}</th>
+              <th>{t('nav.investors')}</th>
               <th>{t('nav.systemAdmin')}</th>
               <th></th>
             </tr>
