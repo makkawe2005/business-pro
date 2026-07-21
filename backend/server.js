@@ -417,17 +417,17 @@ app.get('/investors/:id', requirePage('investors'), async (req, res) => {
 });
 
 app.post('/investors', requirePage('investors'), async (req, res) => {
-  const { name, mobile, email, investor_type, company_name, nationality, national_id, notes, status } = req.body;
+  const { name, mobile, email, investor_type, company_name, industries, notes } = req.body;
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name required' });
   if (!mobile || !MOBILE_PATTERN.test(mobile)) {
     return res.status(400).json({ error: 'mobile must be 9 digits and not start with 0' });
   }
   try {
-    const q = `INSERT INTO investors (name, mobile, email, investor_type, company_name, nationality, national_id, notes, status, created_by)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`;
+    const q = `INSERT INTO investors (name, mobile, email, investor_type, company_name, industries, notes, created_by)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
     const { rows } = await db.query(q, [
       name.trim(), mobile, email || null, investor_type || 'Individual', company_name || null,
-      nationality || null, national_id || null, notes || null, status || 'Prospect', req.user.sub
+      Array.isArray(industries) ? industries : [], notes || null, req.user.sub
     ]);
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -438,7 +438,7 @@ app.post('/investors', requirePage('investors'), async (req, res) => {
 
 app.put('/investors/:id', requirePage('investors'), async (req, res) => {
   const id = Number(req.params.id);
-  const fields = ['name', 'mobile', 'email', 'investor_type', 'company_name', 'nationality', 'national_id', 'notes', 'status'];
+  const fields = ['name', 'mobile', 'email', 'investor_type', 'company_name', 'industries', 'notes'];
   const sets = [];
   const values = [];
   let idx = 1;
@@ -451,7 +451,7 @@ app.put('/investors/:id', requirePage('investors'), async (req, res) => {
   for (const f of fields) {
     if (Object.prototype.hasOwnProperty.call(req.body, f)) {
       sets.push(`${f} = $${idx}`);
-      values.push(req.body[f]);
+      values.push(f === 'industries' ? (Array.isArray(req.body[f]) ? req.body[f] : []) : req.body[f]);
       idx++;
     }
   }

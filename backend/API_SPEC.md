@@ -168,9 +168,9 @@ Roles & Permissions (migration 007 added roles as an enum, migration 008 added t
   - Requires `system_admin` page access. Body: { new_password } (min 8 chars)
   - Admin sets a new password directly, bypassing the old one. Returns 204 on success, 404 if not found.
 
-Investors (migration 025)
+Investors (migration 025, updated in migration 026)
 - Standalone entity, not tied to the client pipeline/phases — gated by its own `investors` page_key, granted to every existing role by default (same convention as `calendar` in migration 019), adjustable via the Permissions page.
-- `investors(id, name, mobile, email, investor_type, company_name, nationality, national_id, notes, status, created_by, created_at, updated_at)`. `investor_type` is free text (`Individual`/`Corporate`/`Institutional` in the UI, default `Individual`). `status` is free text (`Prospect`/`Active`/`Inactive` in the UI, default `Prospect`). `mobile` stores just the 9 local digits (no country prefix baked in), validated server-side as exactly 9 digits not starting with 0 — the UI derives the display prefix from `nationality` the same way the company Additional Phone field does.
+- `investors(id, name, mobile, email, investor_type, company_name, industries, notes, created_by, created_at, updated_at)`. `investor_type` is free text (`Individual`/`Corporate`/`Institutional` in the UI, default `Individual`). `industries` is a `TEXT[]` (added in migration 026, replacing `nationality`/`national_id`/`status` which were dropped in the same migration) — a multi-select checkbox list reusing the same industry options as the company form. `mobile` stores just the 9 local digits, validated server-side as exactly 9 digits not starting with 0 — the UI shows a fixed `+966` prefix (investors have no per-record country field, unlike companies).
 
 - GET /investors
   - Requires `investors` page access. Returns all investors, newest first.
@@ -179,10 +179,10 @@ Investors (migration 025)
   - Requires `investors` page access. 404 if not found.
 
 - POST /investors
-  - Requires `investors` page access. Body: { name, mobile, email?, investor_type?, company_name?, nationality?, national_id?, notes?, status? }. `name` and `mobile` are required; `mobile` must match `^[1-9]\d{8}$`. `created_by` is taken from the authenticated user (JWT `sub`).
+  - Requires `investors` page access. Body: { name, mobile, email?, investor_type?, company_name?, industries?, notes? }. `name` and `mobile` are required; `mobile` must match `^[1-9]\d{8}$`. `industries` defaults to `[]` if omitted or not an array. `created_by` is taken from the authenticated user (JWT `sub`).
 
 - PUT /investors/:id
-  - Requires `investors` page access. Body: any subset of { name, mobile, email, investor_type, company_name, nationality, national_id, notes, status }. Same `mobile` validation as create when provided. 404 if not found.
+  - Requires `investors` page access. Body: any subset of { name, mobile, email, investor_type, company_name, industries, notes }. Same `mobile` validation as create when provided. 404 if not found.
 
 - DELETE /investors/:id
   - Requires `investors` page access. Returns 204 on success, 404 if not found.

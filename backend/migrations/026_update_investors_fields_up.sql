@@ -1,0 +1,9 @@
+BEGIN;
+
+ALTER TABLE investors
+  DROP COLUMN IF EXISTS nationality,
+  DROP COLUMN IF EXISTS national_id,
+  DROP COLUMN IF EXISTS status,
+  ADD COLUMN IF NOT EXISTS industries TEXT[] NOT NULL DEFAULT '{}';
+
+COMMIT;

@@ -3,7 +3,9 @@ import { apiFetch } from '../api/client';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 import { initials } from '../utils/format';
-import { countryOptions, countryPhonePrefixes } from '../data/companyOptions';
+import { industryOptions } from '../data/companyOptions';
+
+const INVESTOR_PHONE_PREFIX = '+966';
 
 const emptyInvestorForm = {
   name: '',
@@ -11,10 +13,8 @@ const emptyInvestorForm = {
   email: '',
   investor_type: 'Individual',
   company_name: '',
-  nationality: 'Saudi Arabia',
-  national_id: '',
-  notes: '',
-  status: 'Prospect'
+  industries: [],
+  notes: ''
 };
 
 export function InvestorsPage() {
@@ -74,10 +74,8 @@ export function InvestorsPage() {
       email: inv.email || '',
       investor_type: inv.investor_type || 'Individual',
       company_name: inv.company_name || '',
-      nationality: inv.nationality || '',
-      national_id: inv.national_id || '',
-      notes: inv.notes || '',
-      status: inv.status || 'Prospect'
+      industries: Array.isArray(inv.industries) ? inv.industries : [],
+      notes: inv.notes || ''
     });
     setEditingId(inv.id);
     setFormVisible(true);
@@ -86,6 +84,15 @@ export function InvestorsPage() {
   function cancelForm() {
     setFormVisible(false);
     setEditingId(null);
+  }
+
+  function toggleIndustry(value) {
+    setFormValues((prev) => ({
+      ...prev,
+      industries: prev.industries.includes(value)
+        ? prev.industries.filter((v) => v !== value)
+        : [...prev.industries, value]
+    }));
   }
 
   async function submitForm() {
@@ -104,10 +111,8 @@ export function InvestorsPage() {
       email: formValues.email.trim(),
       investor_type: formValues.investor_type,
       company_name: formValues.company_name.trim(),
-      nationality: formValues.nationality,
-      national_id: formValues.national_id.trim(),
-      notes: formValues.notes.trim(),
-      status: formValues.status
+      industries: formValues.industries,
+      notes: formValues.notes.trim()
     };
     try {
       const res = editingId !== null
@@ -221,7 +226,7 @@ export function InvestorsPage() {
                 <div className="field-row">
                   <label htmlFor="investor-mobile">{t('investors.mobile')}</label>
                   <div className="phone-prefix-input">
-                    <span className="phone-prefix-badge">{countryPhonePrefixes[formValues.nationality] || '+···'}</span>
+                    <span className="phone-prefix-badge">{INVESTOR_PHONE_PREFIX}</span>
                     <input
                       id="investor-mobile"
                       type="tel"
@@ -267,40 +272,20 @@ export function InvestorsPage() {
                     />
                   </div>
                 )}
-                <div className="field-row">
-                  <label htmlFor="investor-nationality">{t('investors.nationality')}</label>
-                  <select
-                    id="investor-nationality"
-                    value={formValues.nationality}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, nationality: e.target.value }))}
-                  >
-                    <option value="">{t('investors.nationality')}</option>
-                    {countryOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{t(opt.key)}</option>
+                <div className="field-row" style={{ gridColumn: '1 / -1' }}>
+                  <label>{t('investors.industries')}</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
+                    {industryOptions.map((opt) => (
+                      <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 400 }}>
+                        <input
+                          type="checkbox"
+                          checked={formValues.industries.includes(opt.value)}
+                          onChange={() => toggleIndustry(opt.value)}
+                        />
+                        {t(opt.key)}
+                      </label>
                     ))}
-                  </select>
-                </div>
-                <div className="field-row">
-                  <label htmlFor="investor-national-id">{t('investors.nationalId')}</label>
-                  <input
-                    id="investor-national-id"
-                    type="text"
-                    dir="ltr"
-                    value={formValues.national_id}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, national_id: e.target.value }))}
-                  />
-                </div>
-                <div className="field-row">
-                  <label htmlFor="investor-status">{t('investors.status')}</label>
-                  <select
-                    id="investor-status"
-                    value={formValues.status}
-                    onChange={(e) => setFormValues((prev) => ({ ...prev, status: e.target.value }))}
-                  >
-                    <option value="Prospect">{t('investors.statusProspect')}</option>
-                    <option value="Active">{t('investors.statusActive')}</option>
-                    <option value="Inactive">{t('investors.statusInactive')}</option>
-                  </select>
+                  </div>
                 </div>
                 <div className="field-row" style={{ gridColumn: '1 / -1' }}>
                   <label htmlFor="investor-notes">{t('investors.notes')}</label>
@@ -331,19 +316,24 @@ export function InvestorsPage() {
               <div className="info-grid">
                 <div className="info-row">
                   <span>{t('investors.mobile')}</span>
-                  <strong>
-                    {countryPhonePrefixes[selected.nationality] ? `${countryPhonePrefixes[selected.nationality]} ` : ''}
-                    {selected.mobile}
-                  </strong>
+                  <strong>{INVESTOR_PHONE_PREFIX} {selected.mobile}</strong>
                 </div>
                 <div className="info-row"><span>{t('common.email')}</span><strong>{selected.email || '–'}</strong></div>
                 <div className="info-row"><span>{t('investors.type')}</span><strong>{selected.investor_type}</strong></div>
                 {selected.company_name && (
                   <div className="info-row"><span>{t('investors.companyName')}</span><strong>{selected.company_name}</strong></div>
                 )}
-                <div className="info-row"><span>{t('investors.nationality')}</span><strong>{selected.nationality || '–'}</strong></div>
-                <div className="info-row"><span>{t('investors.nationalId')}</span><strong>{selected.national_id || '–'}</strong></div>
-                <div className="info-row"><span>{t('investors.status')}</span><strong>{selected.status}</strong></div>
+                <div className="info-row">
+                  <span>{t('investors.industries')}</span>
+                  <strong>
+                    {Array.isArray(selected.industries) && selected.industries.length
+                      ? selected.industries.map((val) => {
+                          const opt = industryOptions.find((o) => o.value === val);
+                          return opt ? t(opt.key) : val;
+                        }).join(', ')
+                      : '–'}
+                  </strong>
+                </div>
               </div>
               {selected.notes && (
                 <div className="briefing-block">
