@@ -714,7 +714,15 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
             />
           )}
 
-          {!showAddClientForm && (
+          {!showAddClientForm && !client && (
+            <div className="detail-scroll">
+              <div className="calendar-empty-day" style={{ textAlign: 'center', margin: '24px 0' }}>
+                {t('details.noClients')}
+              </div>
+            </div>
+          )}
+
+          {!showAddClientForm && client && (
             <div className="detail-scroll">
               <div className="detail-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
