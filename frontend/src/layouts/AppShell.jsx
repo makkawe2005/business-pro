@@ -54,7 +54,6 @@ export function AppShell() {
           <img className="brand-mark" src={logo} alt="Business Pro" />
           <div className="sidebar-brand-text">
             <strong>Business Pro</strong>
-            <small>{t('nav.brandTagline')}</small>
           </div>
         </div>
 
