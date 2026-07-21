@@ -63,7 +63,6 @@ export const countryPhonePrefixes = {
 };
 
 export const industryOptions = [
-  { value: 'Data analytics', key: 'industry.dataAnalytics' },
   { value: 'Retail', key: 'industry.retail' },
   { value: 'Engineering', key: 'industry.engineering' },
   { value: 'Healthcare', key: 'industry.healthcare' },
