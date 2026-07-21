@@ -262,7 +262,11 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
 app.get('/clients', async (req, res) => {
   const { stage, status } = req.query;
   try {
-    if (stage && !(await roleHasPage(req.user.role_id, stage))) {
+    if (stage) {
+      if (!(await roleHasPage(req.user.role_id, stage))) {
+        return res.status(403).json({ error: 'Not permitted for this phase' });
+      }
+    } else if (!(await roleHasPage(req.user.role_id, 'system_admin'))) {
       return res.status(403).json({ error: 'Not permitted for this phase' });
     }
     const params = [];
@@ -365,7 +369,7 @@ app.put('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, r
   }
 });
 
-app.delete('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, res) => {
+app.delete('/clients/:id', requirePage('system_admin'), requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { rows } = await db.query('DELETE FROM clients WHERE id=$1 RETURNING id', [id]);
