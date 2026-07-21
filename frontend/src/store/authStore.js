@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { usePermissionsStore } from './permissionsStore';
-import { useMyTasksStore } from './myTasksStore';
 
 function readUser() {
   try {
@@ -23,6 +22,5 @@ export const useAuthStore = create((set) => ({
     localStorage.removeItem('authUser');
     set({ token: null, user: null });
     usePermissionsStore.getState().clear();
-    useMyTasksStore.getState().clear();
   }
 }));

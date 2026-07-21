@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePermissionsStore } from '../store/permissionsStore';
-import { useMyTasksStore } from '../store/myTasksStore';
 import { useI18n } from '../i18n/useI18n';
 import { ToastContainer } from '../components/ToastContainer';
 import { GlobeIcon, LogoutIcon } from '../components/Icons';
@@ -12,7 +11,6 @@ export function AppShell() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const pageKeys = usePermissionsStore((s) => s.pageKeys);
-  const hasTasks = useMyTasksStore((s) => s.hasTasks);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, toggleLanguage, nextLangLabel, nextLangCode } = useI18n();
@@ -97,9 +95,7 @@ export function AppShell() {
           {pageKeys.includes('phase4') && (
             <NavLink to="/phase4" className={navClass} onClick={closeMenu}>{t('nav.phase4')}</NavLink>
           )}
-          {hasTasks && (
-            <NavLink to="/my-tasks" className={navClass} onClick={closeMenu}>{t('nav.myTasks')}</NavLink>
-          )}
+          <NavLink to="/my-tasks" className={navClass} onClick={closeMenu}>{t('nav.myTasks')}</NavLink>
           {pageKeys.includes('calendar') && (
             <NavLink to="/calendar" className={navClass} onClick={closeMenu}>{t('nav.calendar')}</NavLink>
           )}

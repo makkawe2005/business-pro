@@ -954,18 +954,6 @@ app.put('/tasks/:id/review', requireClientPhase(resolveClientIdViaTask), async (
   }
 });
 
-// Cheap existence check — powers whether the "My Tasks" nav link shows at all, without
-// pulling every task + its event history just to know if the count is non-zero.
-app.get('/my-tasks/count', async (req, res) => {
-  try {
-    const { rows } = await db.query('SELECT COUNT(*)::int AS count FROM tasks WHERE assigned_to = $1', [req.user.sub]);
-    res.json({ count: rows[0].count });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to count tasks' });
-  }
-});
-
 // Cross-client — every task assigned to the caller, regardless of phase4 access. Powers the
 // "My Tasks" page so any assignee can see and work their own tasks without needing phase4 access.
 app.get('/my-tasks', async (req, res) => {

@@ -106,9 +106,6 @@ Tasks (Phase 4 — Execution, migration 027)
 - GET /my-tasks
   - No page-key gate — any authenticated user gets every task (across every client) where `assigned_to` is themself, each with `contact_name`/`phone`/`email`/`company_name`/`stage` and `events` attached, sent-back tasks sorted first. This is what makes "every assignee sees only their own part" work: assignees browse their work through this endpoint rather than the phase4 client bundle, which they may not have permission to view at all.
 
-- GET /my-tasks/count
-  - No page-key gate. Returns `{ count }` — the total number of tasks (any status) assigned to the caller. Cheap existence check that powers whether the "My Tasks" nav link shows at all, without fetching the full task list + event history just to know if it's non-zero.
-
 - GET /task-assignable-users
   - Requires `phase4` page access. Returns `{ id, name }` for every active user, no team/role restriction — the Project Manager can assign any service or sub-task to anyone.
 
