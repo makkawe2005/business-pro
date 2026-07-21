@@ -16,8 +16,8 @@ const meetingTypeKeys = {
 };
 
 // react-datepicker renders its own calendar UI in English regardless of the browser's display
-// language — unlike the native input[type="date"] picker, which takes its calendar language from
-// the OS/browser setting with no way to force it to stay in English from the page.
+// language, so no extra handling is needed here (contrast with the native input[type="date"]
+// pickers elsewhere, which need an explicit lang="en" to stay off the page's Arabic locale).
 function toDateOnlyString(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

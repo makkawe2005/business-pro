@@ -180,6 +180,20 @@ async function resolveClientIdViaEngagement(req) {
   return rows[0] ? rows[0].client_id : null;
 }
 
+async function resolveClientIdViaTask(req) {
+  const { rows } = await db.query('SELECT client_id FROM tasks WHERE id=$1', [Number(req.params.id)]);
+  return rows[0] ? rows[0].client_id : null;
+}
+
+// Which team a client's checked service becomes a task for; business_solutions gets a
+// parent-only container (assigned_to stays NULL) whose sub-tasks are added dynamically
+// by the Project Manager instead of a fixed list.
+const SERVICE_TITLES = {
+  service_consultation: { service: 'consultation', title: 'Consultation' },
+  service_investment: { service: 'investment', title: 'Investment' },
+  service_business_solutions: { service: 'business_solutions', title: 'Business Solutions' }
+};
+
 // Clients endpoints
 app.get('/clients/summary', async (req, res) => {
   try {
@@ -205,12 +219,14 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
       { key: 'prospect', stage: 'phase1', status: 'Prospect' },
       { key: 'reschedule', stage: 'phase1', status: 'Reschedule' },
       { key: 'sales', stage: 'phase2', status: 'Active' },
-      { key: 'legalFinance', stage: 'phase3', status: 'Finalizing' }
+      { key: 'legalFinance', stage: 'phase3', status: 'Finalizing' },
+      // No status filter: phase4 clients carry either `Executing` or `Completed`, and both belong here.
+      { key: 'execution', stage: 'phase4' }
     ];
     const columns = [];
     for (const def of columnDefs) {
-      const params = def.stage ? [def.stage, def.status] : [def.status];
-      const whereClause = def.stage ? 'c.stage=$1 AND c.status=$2' : 'c.status=$1';
+      const params = def.status ? [def.stage, def.status] : [def.stage];
+      const whereClause = def.status ? 'c.stage=$1 AND c.status=$2' : 'c.stage=$1';
       const { rows } = await db.query(
         `SELECT c.id, c.contact_name, c.phone, c.status, c.stage, c.updated_at, comp.name AS company_name
          FROM clients c
@@ -252,10 +268,84 @@ app.get('/dashboard', requirePage('dashboard'), async (req, res) => {
     `);
     const serviceCounts = serviceRows[0];
 
-    res.json({ columns, statusCounts, industryCounts: industryRows, serviceCounts });
+    // Leaf tasks only (same definition used by /execution/summary) — powers the Overview
+    // dashboard's open-vs-closed donut, a system-wide task snapshot independent of phase4 access.
+    const LEAF_TASK_WHERE = `(parent_task_id IS NOT NULL OR service <> 'business_solutions')`;
+    const { rows: taskCountRows } = await db.query(
+      `SELECT COUNT(*) FILTER (WHERE status <> 'closed')::int AS open,
+              COUNT(*) FILTER (WHERE status = 'closed')::int AS closed
+       FROM tasks WHERE ${LEAF_TASK_WHERE}`
+    );
+    const taskCounts = taskCountRows[0];
+
+    res.json({ columns, statusCounts, industryCounts: industryRows, serviceCounts, taskCounts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch dashboard' });
+  }
+});
+
+// Execution (Phase 4) insights — the Project Manager's own dashboard, gated by phase4
+// rather than the `dashboard` page key so it stays independent of the pipeline overview.
+app.get('/execution/summary', requirePage('phase4'), async (req, res) => {
+  try {
+    const { rows: clientRows } = await db.query(`SELECT COUNT(*)::int AS count FROM clients WHERE stage='phase4'`);
+    const clientCount = clientRows[0].count;
+
+    // Leaf tasks only — direct consultation/investment tasks, and business_solutions
+    // sub-tasks — the business_solutions parent row is a container, never itself worked.
+    const LEAF_TASK_WHERE = `(parent_task_id IS NOT NULL OR service <> 'business_solutions')`;
+    const { rows: taskCountRows } = await db.query(
+      `SELECT COUNT(*) FILTER (WHERE status <> 'closed')::int AS open,
+              COUNT(*) FILTER (WHERE status = 'closed')::int AS closed,
+              COUNT(*) FILTER (WHERE status <> 'closed' AND due_date < CURRENT_DATE)::int AS overdue
+       FROM tasks WHERE ${LEAF_TASK_WHERE}`
+    );
+    const taskCounts = taskCountRows[0];
+
+    const { rows: taskWorkload } = await db.query(
+      `SELECT u.id AS user_id, u.name,
+              COUNT(*) FILTER (WHERE t.status <> 'closed' AND (t.due_date IS NULL OR t.due_date >= CURRENT_DATE))::int AS open_count,
+              COUNT(*) FILTER (WHERE t.status <> 'closed' AND t.due_date < CURRENT_DATE)::int AS overdue_count,
+              COUNT(*) FILTER (WHERE t.status = 'closed')::int AS closed_count
+       FROM tasks t
+       JOIN users u ON u.id = t.assigned_to
+       WHERE ${LEAF_TASK_WHERE}
+       GROUP BY u.id, u.name
+       ORDER BY overdue_count DESC, open_count DESC, u.name ASC`
+    );
+
+    res.json({ clientCount, taskCounts, taskWorkload });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch execution summary' });
+  }
+});
+
+// Flat leaf-task list (direct tasks + business_solutions sub-tasks) with client and
+// assignee context joined in, for the Execution dashboard's task table.
+app.get('/execution/tasks', requirePage('phase4'), async (req, res) => {
+  try {
+    const LEAF_TASK_WHERE = `(t.parent_task_id IS NOT NULL OR t.service <> 'business_solutions')`;
+    const { rows } = await db.query(
+      `SELECT t.id, t.title, t.status, t.due_date, t.service, t.parent_task_id,
+              parent.title AS parent_title,
+              t.assigned_to, u.name AS assignee_name,
+              c.id AS client_id, c.contact_name, comp.name AS company_name
+       FROM tasks t
+       JOIN clients c ON c.id = t.client_id
+       LEFT JOIN users u ON u.id = t.assigned_to
+       LEFT JOIN tasks parent ON parent.id = t.parent_task_id
+       LEFT JOIN LATERAL (
+         SELECT name FROM companies WHERE companies.client_id = c.id ORDER BY created_at ASC LIMIT 1
+       ) comp ON true
+       WHERE ${LEAF_TASK_WHERE}
+       ORDER BY (t.status = 'closed') ASC, t.due_date ASC NULLS LAST, t.created_at ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch execution tasks' });
   }
 });
 
@@ -280,7 +370,20 @@ app.get('/clients', async (req, res) => {
       conditions.push(`c.status = ANY($${params.length}::client_status[])`);
     }
     const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-    const q = `SELECT c.*, COALESCE(counts.engagements_count,0) AS engagements_count, comp.name AS company_name
+    const q = `SELECT c.*, COALESCE(counts.engagements_count,0) AS engagements_count, comp.name AS company_name,
+               EXISTS (
+                 SELECT 1 FROM tasks t WHERE t.client_id = c.id AND t.status <> 'closed'
+                   AND t.due_date < CURRENT_DATE AND (t.parent_task_id IS NOT NULL OR t.service <> 'business_solutions')
+               ) AS has_overdue_task,
+               EXISTS (
+                 SELECT 1 FROM tasks t WHERE t.client_id = c.id AND t.status <> 'closed'
+                   AND t.due_date >= CURRENT_DATE AND t.due_date <= CURRENT_DATE + INTERVAL '2 days'
+                   AND (t.parent_task_id IS NOT NULL OR t.service <> 'business_solutions')
+               ) AS has_due_soon_task,
+               (SELECT COUNT(*)::int FROM tasks t WHERE t.client_id = c.id
+                  AND (t.parent_task_id IS NOT NULL OR t.service <> 'business_solutions')) AS total_task_count,
+               (SELECT COUNT(*)::int FROM tasks t WHERE t.client_id = c.id AND t.status <> 'closed'
+                  AND (t.parent_task_id IS NOT NULL OR t.service <> 'business_solutions')) AS open_task_count
                FROM clients c
                LEFT JOIN (
                  SELECT client_id, COUNT(*) AS engagements_count FROM engagements GROUP BY client_id
@@ -318,7 +421,22 @@ app.get('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, r
     const appointmentsQ = 'SELECT * FROM appointments WHERE client_id=$1 ORDER BY scheduled_at ASC';
     const { rows: appointments } = await db.query(appointmentsQ, [id]);
 
-    res.json({ client, notes, engagements, companies, appointments });
+    const tasksQ = `SELECT t.*, u.name AS assigned_to_name
+                     FROM tasks t LEFT JOIN users u ON u.id = t.assigned_to
+                     WHERE t.client_id=$1 ORDER BY t.parent_task_id NULLS FIRST, t.created_at ASC`;
+    const { rows: tasks } = await db.query(tasksQ, [id]);
+    const taskIds = tasks.map((t) => t.id);
+    if (taskIds.length > 0) {
+      const { rows: events } = await db.query(
+        `SELECT e.*, u.name AS actor_name FROM task_events e LEFT JOIN users u ON u.id = e.actor_user_id
+         WHERE e.task_id = ANY($1) ORDER BY e.created_at ASC`, [taskIds]
+      );
+      const eventsByTask = {};
+      for (const ev of events) (eventsByTask[ev.task_id] ||= []).push(ev);
+      for (const task of tasks) task.events = eventsByTask[task.id] || [];
+    }
+
+    res.json({ client, notes, engagements, companies, appointments, tasks });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch client details' });
@@ -357,11 +475,40 @@ app.put('/clients/:id', requireClientPhase(resolveClientIdDirect), async (req, r
     }
   }
   if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
-  values.push(id);
-  const q = `UPDATE clients SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
   try {
+    if (req.clientStage === 'phase4' && req.body.status === 'Completed') {
+      // Only leaf tasks are individually worked (direct consultation/investment tasks, and
+      // business_solutions sub-tasks) — the business_solutions parent row is just a container.
+      const { rows: openTasks } = await db.query(
+        `SELECT id FROM tasks
+         WHERE client_id=$1 AND status <> 'closed' AND (parent_task_id IS NOT NULL OR service <> 'business_solutions')`,
+        [id]
+      );
+      if (openTasks.length > 0) {
+        return res.status(400).json({ error: 'All tasks must be closed before marking this client Completed' });
+      }
+    }
+
+    values.push(id);
+    const q = `UPDATE clients SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
     const { rows } = await db.query(q, values);
     if (!rows[0]) return res.status(404).json({ error: 'Client not found' });
+
+    if (req.body.stage === 'phase4') {
+      const { rows: existingTasks } = await db.query('SELECT id FROM tasks WHERE client_id=$1', [id]);
+      if (existingTasks.length === 0) {
+        const client = rows[0];
+        for (const [flag, { service, title }] of Object.entries(SERVICE_TITLES)) {
+          if (client[flag]) {
+            await db.query(
+              'INSERT INTO tasks (client_id, service, title) VALUES ($1,$2,$3)',
+              [id, service, title]
+            );
+          }
+        }
+      }
+    }
+
     res.json(rows[0]);
   } catch (err) {
     console.error(err);
@@ -662,6 +809,206 @@ app.put('/clients/:id/drive-link', requirePage('phase1'), async (req, res) => {
   }
 });
 
+// Tasks (Phase 4 — Execution). One task is auto-created per checked service when a client
+// enters phase4 (see PUT /clients/:id). business_solutions is a parent container — its
+// sub-tasks are added/removed here by whoever holds phase4 access (Project Manager),
+// dynamically, with no fixed catalog. Each leaf task (a direct consultation/investment task,
+// or a business_solutions sub-task) has exactly one assignee, who is the only one who can
+// see/edit/submit it — enforced by an ownership check rather than a page permission, since an
+// assignee may not hold phase4 access at all.
+app.post('/clients/:id/tasks', requireClientPhase(resolveClientIdDirect), async (req, res) => {
+  const clientId = Number(req.params.id);
+  const { title, assigned_to, due_date } = req.body;
+  if (!title || !String(title).trim()) return res.status(400).json({ error: 'title required' });
+  if (assigned_to && !due_date) return res.status(400).json({ error: 'due_date required when assigning a sub-task' });
+  try {
+    const { rows: parentRows } = await db.query(
+      `SELECT id FROM tasks WHERE client_id=$1 AND service='business_solutions' AND parent_task_id IS NULL`,
+      [clientId]
+    );
+    if (!parentRows[0]) {
+      return res.status(400).json({ error: 'This client has no Business Solutions task to attach sub-tasks to' });
+    }
+    const { rows } = await db.query(
+      `INSERT INTO tasks (client_id, service, parent_task_id, title, assigned_to, due_date, status)
+       VALUES ($1,'business_solutions',$2,$3,$4,$5,$6) RETURNING *`,
+      [clientId, parentRows[0].id, title.trim(), assigned_to || null, due_date || null, assigned_to ? 'in_progress' : 'unassigned']
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add sub-task' });
+  }
+});
+
+app.put('/tasks/:id', requireClientPhase(resolveClientIdViaTask), async (req, res) => {
+  const id = Number(req.params.id);
+  const fields = ['title', 'assigned_to', 'due_date'];
+  const sets = [];
+  const values = [];
+  let idx = 1;
+  for (const f of fields) {
+    if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+      sets.push(`${f} = $${idx}`);
+      values.push(req.body[f]);
+      idx++;
+    }
+  }
+  if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+  try {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'assigned_to')) {
+      const { rows: taskRows } = await db.query('SELECT status, assigned_to FROM tasks WHERE id=$1', [id]);
+      if (!taskRows[0]) return res.status(404).json({ error: 'Task not found' });
+      if (req.body.assigned_to && taskRows[0].status === 'unassigned') {
+        sets.push(`status = $${idx}`);
+        values.push('in_progress');
+        idx++;
+      }
+    }
+    values.push(id);
+    const q = `UPDATE tasks SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
+    const { rows } = await db.query(q, values);
+    if (!rows[0]) return res.status(404).json({ error: 'Task not found' });
+    if (Object.prototype.hasOwnProperty.call(req.body, 'assigned_to') && req.body.assigned_to) {
+      await db.query(
+        `INSERT INTO task_events (task_id, event_type, actor_user_id) VALUES ($1,'nominated',$2)`,
+        [id, req.user.sub]
+      );
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update task' });
+  }
+});
+
+app.delete('/tasks/:id', requireClientPhase(resolveClientIdViaTask), async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const { rows: taskRows } = await db.query('SELECT service, parent_task_id, status FROM tasks WHERE id=$1', [id]);
+    if (!taskRows[0]) return res.status(404).json({ error: 'Task not found' });
+    if (taskRows[0].parent_task_id === null) {
+      return res.status(400).json({ error: 'Only Business Solutions sub-tasks can be removed' });
+    }
+    if (!['unassigned', 'in_progress'].includes(taskRows[0].status)) {
+      return res.status(400).json({ error: 'Only sub-tasks that have not been submitted yet can be removed' });
+    }
+    await db.query('DELETE FROM tasks WHERE id=$1', [id]);
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove sub-task' });
+  }
+});
+
+app.put('/tasks/:id/submit', async (req, res) => {
+  const id = Number(req.params.id);
+  const { deliverable_note } = req.body;
+  if (!deliverable_note || !deliverable_note.trim()) {
+    return res.status(400).json({ error: 'A deliverable note is required before submitting' });
+  }
+  try {
+    const { rows: taskRows } = await db.query('SELECT assigned_to FROM tasks WHERE id=$1', [id]);
+    if (!taskRows[0]) return res.status(404).json({ error: 'Task not found' });
+    if (taskRows[0].assigned_to !== req.user.sub) {
+      return res.status(403).json({ error: 'Only the assigned person can submit this task' });
+    }
+    const { rows } = await db.query(
+      `UPDATE tasks SET status='submitted', deliverable_note=$1, updated_at=now() WHERE id=$2 RETURNING *`,
+      [deliverable_note.trim(), id]
+    );
+    await db.query(
+      `INSERT INTO task_events (task_id, event_type, actor_user_id) VALUES ($1,'submitted',$2)`,
+      [id, req.user.sub]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit task' });
+  }
+});
+
+app.put('/tasks/:id/review', requireClientPhase(resolveClientIdViaTask), async (req, res) => {
+  const id = Number(req.params.id);
+  const { decision, comment } = req.body;
+  if (!['approve', 'send_back'].includes(decision)) {
+    return res.status(400).json({ error: 'decision must be approve or send_back' });
+  }
+  if (decision === 'send_back' && (!comment || !comment.trim())) {
+    return res.status(400).json({ error: 'A comment is required when sending a task back' });
+  }
+  try {
+    const newStatus = decision === 'approve' ? 'closed' : 'sent_back';
+    const { rows } = await db.query(
+      `UPDATE tasks SET status=$1, updated_at=now() WHERE id=$2 RETURNING *`, [newStatus, id]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Task not found' });
+    await db.query(
+      `INSERT INTO task_events (task_id, event_type, actor_user_id, comment) VALUES ($1,$2,$3,$4)`,
+      [id, decision === 'approve' ? 'closed' : 'sent_back', req.user.sub, comment ? comment.trim() : null]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to review task' });
+  }
+});
+
+// Cheap existence check — powers whether the "My Tasks" nav link shows at all, without
+// pulling every task + its event history just to know if the count is non-zero.
+app.get('/my-tasks/count', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT COUNT(*)::int AS count FROM tasks WHERE assigned_to = $1', [req.user.sub]);
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to count tasks' });
+  }
+});
+
+// Cross-client — every task assigned to the caller, regardless of phase4 access. Powers the
+// "My Tasks" page so any assignee can see and work their own tasks without needing phase4 access.
+app.get('/my-tasks', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT t.*, c.contact_name, c.phone, c.email, c.stage, comp.name AS company_name
+       FROM tasks t
+       JOIN clients c ON c.id = t.client_id
+       LEFT JOIN LATERAL (
+         SELECT name FROM companies WHERE companies.client_id = c.id ORDER BY created_at ASC LIMIT 1
+       ) comp ON true
+       WHERE t.assigned_to = $1
+       ORDER BY t.status = 'sent_back' DESC, t.due_date NULLS LAST, t.created_at ASC`,
+      [req.user.sub]
+    );
+    const taskIds = rows.map((t) => t.id);
+    if (taskIds.length > 0) {
+      const { rows: events } = await db.query(
+        `SELECT e.*, u.name AS actor_name FROM task_events e LEFT JOIN users u ON u.id = e.actor_user_id
+         WHERE e.task_id = ANY($1) ORDER BY e.created_at ASC`, [taskIds]
+      );
+      const eventsByTask = {};
+      for (const ev of events) (eventsByTask[ev.task_id] ||= []).push(ev);
+      for (const task of rows) task.events = eventsByTask[task.id] || [];
+    }
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+// Active users a Project Manager can assign a task to — no team/role restriction.
+app.get('/task-assignable-users', requirePage('phase4'), async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT id, name FROM users WHERE is_active = true ORDER BY name');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch assignable users' });
+  }
+});
+
 // Engagements
 app.post('/clients/:id/engagements', requireClientPhase(resolveClientIdDirect), async (req, res) => {
   const clientId = Number(req.params.id);
@@ -871,7 +1218,7 @@ app.put('/roles/:id', requirePage('system_admin'), async (req, res) => {
 });
 
 // Permissions (role -> page access matrix)
-const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'calendar', 'investors', 'system_admin'];
+const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'phase4', 'calendar', 'investors', 'system_admin'];
 
 app.get('/permissions/me', async (req, res) => {
   try {

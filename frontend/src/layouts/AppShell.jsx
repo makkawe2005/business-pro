@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePermissionsStore } from '../store/permissionsStore';
+import { useMyTasksStore } from '../store/myTasksStore';
 import { useI18n } from '../i18n/useI18n';
 import { ToastContainer } from '../components/ToastContainer';
 import { GlobeIcon, LogoutIcon } from '../components/Icons';
@@ -11,12 +12,15 @@ export function AppShell() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const pageKeys = usePermissionsStore((s) => s.pageKeys);
+  const hasTasks = useMyTasksStore((s) => s.hasTasks);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, toggleLanguage, nextLangLabel, nextLangCode } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [systemAdminOpen, setSystemAdminOpen] = useState(false);
   const systemAdminExpanded = systemAdminOpen || location.pathname.startsWith('/system-admin');
+  const [dashboardsOpen, setDashboardsOpen] = useState(false);
+  const dashboardsExpanded = dashboardsOpen || location.pathname.startsWith('/dashboard');
 
   function handleLogout() {
     logout();
@@ -58,8 +62,28 @@ export function AppShell() {
         </div>
 
         <nav className="sidebar-nav">
-          {pageKeys.includes('dashboard') && (
-            <NavLink to="/dashboard" className={navClass} onClick={closeMenu}>{t('nav.dashboard')}</NavLink>
+          {(pageKeys.includes('dashboard') || pageKeys.includes('phase4')) && (
+            <div className="sidebar-nav-group">
+              <button
+                type="button"
+                className={`sidebar-nav-group-toggle${dashboardsExpanded ? ' expanded' : ''}`}
+                onClick={() => setDashboardsOpen((v) => !v)}
+                aria-expanded={dashboardsExpanded}
+              >
+                <span>{t('nav.dashboards')}</span>
+                <span className="sidebar-nav-chevron">›</span>
+              </button>
+              {dashboardsExpanded && (
+                <div className="sidebar-nav-subgroup">
+                  {pageKeys.includes('dashboard') && (
+                    <NavLink to="/dashboard" end className={subNavClass} onClick={closeMenu}>{t('nav.dashboardOverview')}</NavLink>
+                  )}
+                  {pageKeys.includes('phase4') && (
+                    <NavLink to="/dashboard/execution" className={subNavClass} onClick={closeMenu}>{t('nav.dashboardExecution')}</NavLink>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           {pageKeys.includes('phase1') && (
             <NavLink to="/phase1" className={navClass} onClick={closeMenu}>{t('nav.phase1')}</NavLink>
@@ -69,6 +93,12 @@ export function AppShell() {
           )}
           {pageKeys.includes('phase3') && (
             <NavLink to="/phase3" className={navClass} onClick={closeMenu}>{t('nav.phase3')}</NavLink>
+          )}
+          {pageKeys.includes('phase4') && (
+            <NavLink to="/phase4" className={navClass} onClick={closeMenu}>{t('nav.phase4')}</NavLink>
+          )}
+          {hasTasks && (
+            <NavLink to="/my-tasks" className={navClass} onClick={closeMenu}>{t('nav.myTasks')}</NavLink>
           )}
           {pageKeys.includes('calendar') && (
             <NavLink to="/calendar" className={navClass} onClick={closeMenu}>{t('nav.calendar')}</NavLink>

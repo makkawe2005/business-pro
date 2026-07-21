@@ -6,7 +6,10 @@ import { SystemAdminLayout } from './layouts/SystemAdminLayout';
 import { LoginPage } from './pages/LoginPage';
 import { PublicRegistrationPage } from './pages/PublicRegistrationPage';
 import { PhaseView } from './pages/PhaseView';
+import { ExecutionPage } from './pages/ExecutionPage';
+import { MyTasksPage } from './pages/MyTasksPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ExecutionDashboardPage } from './pages/ExecutionDashboardPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { InvestorsPage } from './pages/InvestorsPage';
 import { AdminPage } from './pages/AdminPage';
@@ -21,6 +24,7 @@ const PAGE_PRIORITY = [
   ['phase1', '/phase1'],
   ['phase2', '/phase2'],
   ['phase3', '/phase3'],
+  ['phase4', '/phase4'],
   ['investors', '/investors'],
   ['system_admin', '/system-admin']
 ];
@@ -28,7 +32,9 @@ const PAGE_PRIORITY = [
 function IndexRedirect() {
   const pageKeys = usePermissionsStore((s) => s.pageKeys);
   const match = PAGE_PRIORITY.find(([key]) => pageKeys.includes(key));
-  return <Navigate to={match ? match[1] : '/no-access'} replace />;
+  // /my-tasks needs no page permission, so it's the fallback for task assignees who hold
+  // no other page access at all, instead of sending them to a dead-end "no access" screen.
+  return <Navigate to={match ? match[1] : '/my-tasks'} replace />;
 }
 
 export default function App() {
@@ -41,8 +47,12 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route index element={<IndexRedirect />} />
             <Route path="/no-access" element={<NoAccessPage />} />
+            <Route path="/my-tasks" element={<MyTasksPage />} />
             <Route element={<RequirePage pageKey="dashboard" />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+            </Route>
+            <Route element={<RequirePage pageKey="phase4" />}>
+              <Route path="/dashboard/execution" element={<ExecutionDashboardPage />} />
             </Route>
             <Route element={<RequirePage pageKey="calendar" />}>
               <Route path="/calendar" element={<CalendarPage />} />
@@ -89,6 +99,8 @@ export default function App() {
                   <PhaseView
                     stage="phase3"
                     listStatusFilter="Finalizing"
+                    graduateToStage="phase4"
+                    graduateStatus="Executing"
                     deleteLabelKey="pipeline.dealCanceled"
                     canEditClient={false}
                     canAddClient={false}
@@ -97,6 +109,9 @@ export default function App() {
                   />
                 }
               />
+            </Route>
+            <Route element={<RequirePage pageKey="phase4" />}>
+              <Route path="/phase4" element={<ExecutionPage />} />
             </Route>
             <Route element={<RequirePage pageKey="system_admin" />}>
               <Route path="/system-admin" element={<SystemAdminLayout />}>

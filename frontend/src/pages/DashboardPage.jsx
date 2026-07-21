@@ -20,19 +20,24 @@ const INDUSTRY_COLORS = {
 const INDUSTRY_LABEL_KEYS = Object.fromEntries(industryOptions.map((opt) => [opt.value, opt.key]));
 const FALLBACK_INDUSTRY_COLOR = '#94a3b8';
 
-const COLUMN_ORDER = ['prospect', 'reschedule', 'sales', 'legalFinance'];
+const COLUMN_ORDER = ['prospect', 'reschedule', 'sales', 'legalFinance', 'execution'];
 
 const STATUS_META = {
   Prospect: { labelKey: 'dashboard.columnProspect', color: 'var(--bp-navy)' },
   Reschedule: { labelKey: 'dashboard.columnReschedule', color: 'var(--bp-warning)' },
   Active: { labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' },
-  Finalizing: { labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' }
+  Finalizing: { labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' },
+  Executing: { labelKey: 'nav.phase4', color: 'var(--bp-gold)' },
+  Completed: { labelKey: 'tasks.completedLabel', color: 'var(--bp-success)' }
 };
 
 const STATUS_FILTER_OPTIONS = [
   { status: 'Prospect', labelKey: 'dashboard.columnProspect', color: 'var(--bp-navy)' },
   { status: 'Reschedule', labelKey: 'dashboard.columnReschedule', color: 'var(--bp-warning)' },
-  { status: 'Active', labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' }
+  { status: 'Active', labelKey: 'dashboard.columnSales', color: 'var(--bp-success)' },
+  { status: 'Finalizing', labelKey: 'dashboard.columnLegalFinance', color: 'var(--bp-neutral)' },
+  { status: 'Executing', labelKey: 'nav.phase4', color: 'var(--bp-gold)' },
+  { status: 'Completed', labelKey: 'tasks.completedLabel', color: 'var(--bp-success)' }
 ];
 
 const STATUS_BARS = [
@@ -59,7 +64,9 @@ export function DashboardPage() {
   const [statusCounts, setStatusCounts] = useState({});
   const [industryCounts, setIndustryCounts] = useState([]);
   const [hoveredIndustry, setHoveredIndustry] = useState(null);
+  const [hoveredTaskSegment, setHoveredTaskSegment] = useState(null);
   const [serviceCounts, setServiceCounts] = useState({});
+  const [taskCounts, setTaskCounts] = useState({ open: 0, closed: 0 });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState(null);
   const [tablePage, setTablePage] = useState(0);
@@ -98,6 +105,7 @@ export function DashboardPage() {
         setStatusCounts(data.statusCounts || {});
         setIndustryCounts(data.industryCounts || []);
         setServiceCounts(data.serviceCounts || {});
+        setTaskCounts(data.taskCounts || { open: 0, closed: 0 });
       } catch (err) {
         console.error(err);
         showToast(t('dashboard.loadFailed'), 'error');
@@ -227,6 +235,70 @@ export function DashboardPage() {
             })()}
           </div>
         </div>
+
+        <div className="dashboard-chart-card">
+          <h3 className="section-title">{t('dashboard.taskChartTitle')}</h3>
+          {taskCounts.open + taskCounts.closed === 0 ? (
+            <p className="dashboard-empty">{t('dashboard.emptyColumn')}</p>
+          ) : (
+            <div className="donut-chart-wrapper">
+              {(() => {
+                const total = taskCounts.open + taskCounts.closed;
+                const radius = 40;
+                const circumference = 2 * Math.PI * radius;
+                const segments = [
+                  { key: 'open', count: taskCounts.open, color: 'var(--bp-navy)', labelKey: 'dashboard.taskOpen' },
+                  { key: 'closed', count: taskCounts.closed, color: 'var(--bp-success)', labelKey: 'dashboard.taskClosed' }
+                ].filter((seg) => seg.count > 0);
+                let cumulative = 0;
+                const drawn = segments.map((seg) => {
+                  const fraction = seg.count / total;
+                  const dash = fraction * circumference;
+                  const offset = -cumulative * circumference;
+                  cumulative += fraction;
+                  return { ...seg, dash, offset };
+                });
+                const hovered = drawn.find((s) => s.key === hoveredTaskSegment);
+                return (
+                  <div className="donut-chart">
+                    <svg viewBox="0 0 100 100" className="donut-svg">
+                      {drawn.map((seg) => (
+                        <circle
+                          key={seg.key}
+                          cx="50"
+                          cy="50"
+                          r={radius}
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth={hoveredTaskSegment === seg.key ? 20 : 16}
+                          strokeDasharray={`${seg.dash} ${circumference - seg.dash}`}
+                          strokeDashoffset={seg.offset}
+                          onMouseEnter={() => setHoveredTaskSegment(seg.key)}
+                          onMouseLeave={() => setHoveredTaskSegment(null)}
+                          style={{ cursor: 'pointer', transition: 'stroke-width 0.15s ease' }}
+                        />
+                      ))}
+                    </svg>
+                    <div className="donut-chart-hole">
+                      {hovered ? (
+                        <>
+                          <strong>{hovered.count}</strong>
+                          <span>{t(hovered.labelKey)}</span>
+                        </>
+                      ) : (
+                        <>
+                          <strong>{total}</strong>
+                          <span>{t('dashboard.donutTotalLabel')}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+
       </div>
 
       <div className="dashboard-search">
