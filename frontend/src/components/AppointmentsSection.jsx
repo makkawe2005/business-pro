@@ -3,6 +3,8 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
+import { TimeSlotGrid } from './TimeSlotGrid';
+import { formatDateOnly } from '../utils/format';
 
 const statusKeys = {
   Scheduled: 'appointments.statusScheduled',
@@ -18,12 +20,6 @@ const meetingTypeKeys = {
 // react-datepicker renders its own calendar UI in English regardless of the browser's display
 // language, so no extra handling is needed here (contrast with the native input[type="date"]
 // pickers elsewhere, which need an explicit lang="en" to stay off the page's Arabic locale).
-function toDateOnlyString(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCancel, onRemove }) {
   const { t } = useI18n();
@@ -42,7 +38,7 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
       showToast(t('appointments.fieldsRequired'), 'error');
       return;
     }
-    onAdd(`${toDateOnlyString(scheduledDate)}T${scheduledTime}`, trimmedTitle, agenda.trim(), meetingType, location.trim(), meetingLink.trim());
+    onAdd(`${formatDateOnly(scheduledDate)}T${scheduledTime}`, trimmedTitle, agenda.trim(), meetingType, location.trim(), meetingLink.trim());
     setScheduledDate(null);
     setScheduledTime('');
     setTitle('');
@@ -94,7 +90,7 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
         )}
       </div>
       <div className="company-form-grid">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', gridColumn: '1 / -1' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '10px', gridColumn: '1 / -1' }}>
           <DatePicker
             selected={scheduledDate}
             onChange={setScheduledDate}
@@ -102,13 +98,7 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
             placeholderText="YYYY-MM-DD"
             className="appointment-date-input"
             wrapperClassName="appointment-date-wrapper"
-          />
-          <input
-            type="time"
-            dir="ltr"
-            aria-label={t('appointments.timeLabel')}
-            value={scheduledTime}
-            onChange={(e) => setScheduledTime(e.target.value)}
+            minDate={new Date()}
           />
           <input
             type="text"
@@ -121,6 +111,11 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
             <option value="In-Person">{t('appointments.meetingTypeInPerson')}</option>
           </select>
         </div>
+        <TimeSlotGrid
+          date={scheduledDate ? formatDateOnly(scheduledDate) : null}
+          value={scheduledTime}
+          onChange={setScheduledTime}
+        />
         {meetingType === 'In-Person' ? (
           <input
             type="text"

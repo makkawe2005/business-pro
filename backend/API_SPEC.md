@@ -63,16 +63,35 @@ Appointments
 
 - POST /clients/:id/appointments
   - Body: { scheduled_at, title, agenda?, meeting_type?, location?, meeting_link? }
-  - `scheduled_at` and `title` are required. Creates an appointment linked to the client with `status` defaulting to `Scheduled` and `meeting_type` defaulting to `Remote` (added in migration 015; one of `Remote`/`In-Person`, enforced via a `CHECK` constraint, not an enum). `location` and `meeting_link` (added in migration 020, both nullable) are freeform text — the frontend shows/collects `location` for `In-Person` appointments and `meeting_link` for `Remote` ones, but the API itself doesn't enforce that pairing. Same current-stage permission check as `PUT /clients/:id`.
+  - `scheduled_at` and `title` are required. `scheduled_at` is checked against the company calendar (`checkBusinessHours` — same `business_hours`/`calendar_closures` tables as `GET /calendar/available-slots`, migration 028) and rejected with 400 if it's in the past, falls outside working hours, or lands on a closure date; this is a hard block, not a warning. Creates an appointment linked to the client with `status` defaulting to `Scheduled` and `meeting_type` defaulting to `Remote` (added in migration 015; one of `Remote`/`In-Person`, enforced via a `CHECK` constraint, not an enum). `location` and `meeting_link` (added in migration 020, both nullable) are freeform text — the frontend shows/collects `location` for `In-Person` appointments and `meeting_link` for `Remote` ones, but the API itself doesn't enforce that pairing. Same current-stage permission check as `PUT /clients/:id`.
 
 - PUT /appointments/:id
-  - Body: any subset of { scheduled_at, title, agenda, status, meeting_type, location, meeting_link } to update. `status` is one of `Scheduled`/`Completed`/`Cancelled` (the `appointment_status` enum); `meeting_type` is one of `Remote`/`In-Person`. Returns the updated resource, 404 if not found. Permission check resolves the owning client via `appointments.client_id`.
+  - Body: any subset of { scheduled_at, title, agenda, status, meeting_type, location, meeting_link } to update. `status` is one of `Scheduled`/`Completed`/`Cancelled` (the `appointment_status` enum); `meeting_type` is one of `Remote`/`In-Person`. If `scheduled_at` is included, it goes through the same `checkBusinessHours` hard block as `POST` above — status-only updates (mark completed/cancel) are unaffected since they don't touch `scheduled_at`. Returns the updated resource, 404 if not found. Permission check resolves the owning client via `appointments.client_id`.
 
 - DELETE /appointments/:id
   - Deletes a single appointment. Returns 204 on success, 404 if not found. Same permission check as PUT.
 
 - Phase 2 replaced its Call log (notes) section with Appointments; Phase 1 has no notes section (removed — see below), other phases still use notes.
 - Notes are hidden from the Client Relation (phase1) UI specifically (frontend-only condition in `PhaseView.jsx`); the `POST /clients/:id/notes` endpoint itself has no stage restriction.
+
+Calendar availability (migration 028) — company-wide business hours + holiday closures backing a
+shared available-slots computation. `business_hours.user_id` and `calendar_closures.user_id` are
+both nullable and always `NULL` today (company-wide); the columns exist so a future move to
+per-consultant calendars is a query/UI change, not a schema migration. Lives under System Admin →
+Calendar in the frontend, but reused as-is by any future consumer (e.g. a PM-facing consultant
+scheduling tool) since the read endpoint below isn't admin-gated.
+- GET /calendar/business-hours
+  - Requires `system_admin`. Returns the 7 company-wide rows (`user_id IS NULL`), ordered by `day_of_week` (0=Sunday..6=Saturday).
+- PUT /calendar/business-hours
+  - Requires `system_admin`. Body: `{ days: [{ day_of_week, is_open, start_time, end_time }, ...] }`. Upserts each day (`user_id` stays `NULL`); `start_time`/`end_time` are ignored (stored `NULL`) when `is_open` is false. Returns the full updated set of 7 rows.
+- GET /calendar/closures
+  - Requires `system_admin`. Returns every company-wide closure (`user_id IS NULL`), each with `created_by_name` joined in, ordered by `closure_date` ascending. `end_date` (added migration 029, nullable) makes a row span a range of days; a row with `end_date IS NULL` is a single-day closure (`closure_date` only) — every consumer of this table treats `COALESCE(end_date, closure_date)` as the effective last day.
+- POST /calendar/closures
+  - Requires `system_admin`. Body: `{ date, end_date?, label? }`. `end_date` defaults to `date` (single-day) when omitted; 400 if `end_date < date`. Adds a company-wide closure spanning `[date, end_date]` inclusive, `created_by` set to the caller.
+- DELETE /calendar/closures/:id
+  - Requires `system_admin`. Removes a closure (the whole range, not a single day within it). 404 if not found (or not company-wide).
+- GET /calendar/available-slots?date=YYYY-MM-DD&duration=60
+  - No page-key gate — authenticated only. Deliberately not `system_admin`-restricted: it's read-only, reveals nothing sensitive (just open time labels), and its real consumer is meant to be a future PM-facing scheduling tool, not the admin portal. Returns `{ date, slots: [] }` immediately if `date` is before today (server-local). Otherwise looks up `business_hours` for that date's weekday; if closed, or the date falls within any `calendar_closures` range (`closure_date <= date <= COALESCE(end_date, closure_date)`), returns `{ date, slots: [] }`. Otherwise generates `HH:MM` labels from `start_time` to `end_time` in `duration`-minute steps (default 60), excluding any time already taken by an `appointments` row with `status = 'Scheduled'` on that date, and — when `date` is today — excluding any label at or before the current server time.
 
 Google Drive link (migration 023, replaces the earlier file-upload Documents feature from migration 021)
 - `clients.drive_link` (`VARCHAR(500)`, nullable) — a single external Google Drive URL per client, replacing the old in-Postgres `BYTEA` document storage. `client_documents` and its upload/download endpoints were dropped; any previously-uploaded files were discarded (accepted data loss).

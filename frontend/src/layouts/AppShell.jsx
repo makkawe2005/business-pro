@@ -119,6 +119,7 @@ export function AppShell() {
                   <NavLink to="/system-admin/clients" className={subNavClass} onClick={closeMenu}>{t('systemAdmin.clientsNav')}</NavLink>
                   <NavLink to="/system-admin/permissions" className={subNavClass} onClick={closeMenu}>{t('systemAdmin.permissionsNav')}</NavLink>
                   <NavLink to="/system-admin/roles" className={subNavClass} onClick={closeMenu}>{t('systemAdmin.rolesNav')}</NavLink>
+                  <NavLink to="/system-admin/calendar" className={subNavClass} onClick={closeMenu}>{t('systemAdmin.calendarNav')}</NavLink>
                 </div>
               )}
             </div>

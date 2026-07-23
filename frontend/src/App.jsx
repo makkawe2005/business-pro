@@ -16,6 +16,7 @@ import { AdminPage } from './pages/AdminPage';
 import { UsersPage } from './pages/UsersPage';
 import { PermissionsPage } from './pages/PermissionsPage';
 import { RolesPage } from './pages/RolesPage';
+import { CalendarSettingsPage } from './pages/CalendarSettingsPage';
 import { NoAccessPage } from './pages/NoAccessPage';
 import { usePermissionsStore } from './store/permissionsStore';
 
@@ -120,6 +121,7 @@ export default function App() {
                 <Route path="clients" element={<AdminPage />} />
                 <Route path="permissions" element={<PermissionsPage />} />
                 <Route path="roles" element={<RolesPage />} />
+                <Route path="calendar" element={<CalendarSettingsPage />} />
               </Route>
             </Route>
           </Route>

@@ -739,6 +739,9 @@ app.post('/clients/:id/appointments', requireClientPhase(resolveClientIdDirect),
   const { scheduled_at, title, agenda, created_by, meeting_type, location, meeting_link } = req.body;
   if (!scheduled_at || !title) return res.status(400).json({ error: 'scheduled_at and title required' });
   try {
+    const hoursCheck = await checkBusinessHours(scheduled_at);
+    if (!hoursCheck.valid) return res.status(400).json({ error: hoursCheck.error });
+
     const q = `INSERT INTO appointments (client_id, scheduled_at, title, agenda, created_by, meeting_type, location, meeting_link)
                VALUES ($1,$2,$3,$4,$5,COALESCE($6,'Remote'),$7,$8) RETURNING *`;
     const { rows } = await db.query(q, [
@@ -769,6 +772,10 @@ app.put('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment), 
   values.push(id);
   const q = `UPDATE appointments SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
   try {
+    if (Object.prototype.hasOwnProperty.call(req.body, 'scheduled_at')) {
+      const hoursCheck = await checkBusinessHours(req.body.scheduled_at);
+      if (!hoursCheck.valid) return res.status(400).json({ error: hoursCheck.error });
+    }
     const { rows } = await db.query(q, values);
     if (!rows[0]) return res.status(404).json({ error: 'Appointment not found' });
     res.json(rows[0]);
@@ -787,6 +794,171 @@ app.delete('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete appointment' });
+  }
+});
+
+// Shared by the appointment endpoints below and the available-slots endpoint further down —
+// same business_hours/calendar_closures lookup, but for a single instant instead of a list.
+// Local Date components (not UTC methods), matching the formatDateOnly convention already
+// used elsewhere, so this agrees with what the browser considers the same calendar day/time.
+async function checkBusinessHours(scheduledAt) {
+  const d = new Date(scheduledAt);
+  if (d.getTime() <= Date.now()) {
+    return { valid: false, error: 'Cannot book an appointment in the past' };
+  }
+  const dayOfWeek = d.getDay();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const { rows: hoursRows } = await db.query(
+    `SELECT * FROM business_hours WHERE user_id IS NULL AND day_of_week = $1`, [dayOfWeek]
+  );
+  const hours = hoursRows[0];
+  if (!hours || !hours.is_open || !hours.start_time || !hours.end_time) {
+    return { valid: false, error: 'Selected time is outside working hours' };
+  }
+  const timeLabel = `${hh}:${mm}`;
+  if (timeLabel < hours.start_time.slice(0, 5) || timeLabel >= hours.end_time.slice(0, 5)) {
+    return { valid: false, error: 'Selected time is outside working hours' };
+  }
+
+  const { rows: closureRows } = await db.query(
+    `SELECT label FROM calendar_closures WHERE user_id IS NULL AND closure_date <= $1 AND COALESCE(end_date, closure_date) >= $1`, [dateStr]
+  );
+  if (closureRows.length > 0) {
+    const label = closureRows[0].label;
+    return { valid: false, error: label ? `This date is unavailable: ${label}` : 'This date is unavailable' };
+  }
+
+  return { valid: true };
+}
+
+// Calendar availability (migration 028) — company-wide business hours + holiday closures.
+// user_id stays NULL everywhere below; the column exists so a future move to per-consultant
+// calendars is a query change, not a schema migration.
+app.get('/calendar/business-hours', requirePage('system_admin'), async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM business_hours WHERE user_id IS NULL ORDER BY day_of_week`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch business hours' });
+  }
+});
+
+app.put('/calendar/business-hours', requirePage('system_admin'), async (req, res) => {
+  const { days } = req.body;
+  if (!Array.isArray(days) || days.length === 0) return res.status(400).json({ error: 'days array required' });
+  try {
+    for (const d of days) {
+      await db.query(
+        `INSERT INTO business_hours (user_id, day_of_week, is_open, start_time, end_time, updated_at)
+         VALUES (NULL, $1, $2, $3, $4, now())
+         ON CONFLICT (day_of_week) WHERE user_id IS NULL
+         DO UPDATE SET is_open = $2, start_time = $3, end_time = $4, updated_at = now()`,
+        [d.day_of_week, !!d.is_open, d.is_open ? (d.start_time || null) : null, d.is_open ? (d.end_time || null) : null]
+      );
+    }
+    const { rows } = await db.query(`SELECT * FROM business_hours WHERE user_id IS NULL ORDER BY day_of_week`);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update business hours' });
+  }
+});
+
+app.get('/calendar/closures', requirePage('system_admin'), async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT c.*, u.name AS created_by_name FROM calendar_closures c
+       LEFT JOIN users u ON u.id = c.created_by
+       WHERE c.user_id IS NULL ORDER BY c.closure_date ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch calendar closures' });
+  }
+});
+
+app.post('/calendar/closures', requirePage('system_admin'), async (req, res) => {
+  const { date, end_date, label } = req.body;
+  if (!date) return res.status(400).json({ error: 'date required' });
+  const effectiveEnd = end_date || date;
+  if (effectiveEnd < date) return res.status(400).json({ error: 'end_date cannot be before date' });
+  try {
+    const { rows } = await db.query(
+      `INSERT INTO calendar_closures (user_id, closure_date, end_date, label, created_by) VALUES (NULL, $1, $2, $3, $4) RETURNING *`,
+      [date, effectiveEnd, label || null, req.user.sub]
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add calendar closure' });
+  }
+});
+
+app.delete('/calendar/closures/:id', requirePage('system_admin'), async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `DELETE FROM calendar_closures WHERE id=$1 AND user_id IS NULL RETURNING id`,
+      [Number(req.params.id)]
+    );
+    if (!rows[0]) return res.status(404).json({ error: 'Closure not found' });
+    res.status(204).end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to remove calendar closure' });
+  }
+});
+
+// Read-only, no page-key gate (just authenticated) — non-sensitive, and the future
+// PM-facing consultant scheduling tool isn't a system_admin surface.
+app.get('/calendar/available-slots', async (req, res) => {
+  const { date, duration } = req.query;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'date (YYYY-MM-DD) required' });
+  const slotMinutes = Number(duration) > 0 ? Number(duration) : 60;
+  try {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    if (date < todayStr) return res.json({ date, slots: [] });
+    const nowLabel = date === todayStr ? `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` : null;
+
+    const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
+    const { rows: hoursRows } = await db.query(
+      `SELECT * FROM business_hours WHERE user_id IS NULL AND day_of_week = $1`, [dayOfWeek]
+    );
+    const hours = hoursRows[0];
+    if (!hours || !hours.is_open || !hours.start_time || !hours.end_time) {
+      return res.json({ date, slots: [] });
+    }
+
+    const { rows: closureRows } = await db.query(
+      `SELECT 1 FROM calendar_closures WHERE user_id IS NULL AND closure_date <= $1 AND COALESCE(end_date, closure_date) >= $1`, [date]
+    );
+    if (closureRows.length > 0) return res.json({ date, slots: [] });
+
+    const { rows: appts } = await db.query(
+      `SELECT scheduled_at FROM appointments WHERE status = 'Scheduled' AND scheduled_at::date = $1::date`, [date]
+    );
+    const takenTimes = new Set(appts.map((a) => new Date(a.scheduled_at).toTimeString().slice(0, 5)));
+
+    const slots = [];
+    let [h, m] = hours.start_time.split(':').map(Number);
+    const [endH, endM] = hours.end_time.split(':').map(Number);
+    while (h < endH || (h === endH && m < endM)) {
+      const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      if (!takenTimes.has(label) && (!nowLabel || label > nowLabel)) slots.push(label);
+      m += slotMinutes;
+      while (m >= 60) { m -= 60; h += 1; }
+    }
+    res.json({ date, slots });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to compute available slots' });
   }
 });
 
