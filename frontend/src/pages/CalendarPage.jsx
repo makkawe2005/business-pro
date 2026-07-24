@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api/client';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
-import { initials } from '../utils/format';
+import { initials, isSafeHttpUrl } from '../utils/format';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -121,7 +121,7 @@ export function CalendarPage() {
                     {appt.meeting_type === 'In-Person' && appt.location && (
                       <div className="location">{appt.location}</div>
                     )}
-                    {appt.meeting_type === 'Remote' && appt.meeting_link && (
+                    {appt.meeting_type === 'Remote' && appt.meeting_link && isSafeHttpUrl(appt.meeting_link) && (
                       <a
                         className="calendar-join-link"
                         href={appt.meeting_link}

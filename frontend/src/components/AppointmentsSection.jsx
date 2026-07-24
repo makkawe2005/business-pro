@@ -4,7 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 import { TimeSlotGrid } from './TimeSlotGrid';
-import { formatDateOnly } from '../utils/format';
+import { formatDateOnly, isSafeHttpUrl } from '../utils/format';
 
 const statusKeys = {
   Scheduled: 'appointments.statusScheduled',
@@ -65,7 +65,9 @@ export function AppointmentsSection({ appointments, onAdd, onMarkCompleted, onCa
                 {appt.meeting_type === 'Remote' && appt.meeting_link && (
                   <p>
                     {t('appointments.meetingLinkLabel')}:{' '}
-                    <a href={appt.meeting_link} target="_blank" rel="noopener noreferrer">{appt.meeting_link}</a>
+                    {isSafeHttpUrl(appt.meeting_link) ? (
+                      <a href={appt.meeting_link} target="_blank" rel="noopener noreferrer">{appt.meeting_link}</a>
+                    ) : appt.meeting_link}
                   </p>
                 )}
                 {appt.agenda && <p>{appt.agenda}</p>}

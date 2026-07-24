@@ -1,3 +1,16 @@
+// Stored links are validated server-side, but this is the last line of defense before
+// rendering a user-supplied string as an href — without it, a javascript: or data: URI
+// would execute in whoever clicks the link.
+export function isSafeHttpUrl(value) {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function initials(name) {
   return (name || '').split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 }

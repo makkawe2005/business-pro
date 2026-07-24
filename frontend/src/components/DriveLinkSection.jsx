@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '../i18n/useI18n';
 import { FolderIcon, ExternalLinkIcon } from './Icons';
+import { isSafeHttpUrl } from '../utils/format';
 
 export function DriveLinkSection({ driveLink, canEdit, onSave }) {
   const { t } = useI18n();
@@ -45,9 +46,13 @@ export function DriveLinkSection({ driveLink, canEdit, onSave }) {
         </div>
       ) : driveLink ? (
         <div className="drive-link-display">
-          <a className="drive-link-open" href={driveLink} target="_blank" rel="noopener noreferrer">
-            {t('driveLink.open')} <ExternalLinkIcon />
-          </a>
+          {isSafeHttpUrl(driveLink) ? (
+            <a className="drive-link-open" href={driveLink} target="_blank" rel="noopener noreferrer">
+              {t('driveLink.open')} <ExternalLinkIcon />
+            </a>
+          ) : (
+            <span className="drive-link-empty">{driveLink}</span>
+          )}
           {canEdit && (
             <button className="button neutral" type="button" onClick={() => setEditing(true)}>
               {t('driveLink.change')}

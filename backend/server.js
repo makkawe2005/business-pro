@@ -8,6 +8,12 @@ const db = require('./database');
 
 const app = express();
 
+// Render (and most PaaS hosts) put the app behind one reverse-proxy hop. Without this,
+// Express reads req.ip as the proxy's own address for every request, so express-rate-limit
+// keys all visitors into a single shared bucket instead of one bucket per real client —
+// letting one abusive client exhaust the login limiter and lock out everyone else.
+app.set('trust proxy', 1);
+
 const allowedOrigin = process.env.FRONTEND_ORIGIN;
 app.use(cors(allowedOrigin ? { origin: allowedOrigin } : {}));
 app.use(express.json());
@@ -183,6 +189,19 @@ async function resolveClientIdViaEngagement(req) {
 async function resolveClientIdViaTask(req) {
   const { rows } = await db.query('SELECT client_id FROM tasks WHERE id=$1', [Number(req.params.id)]);
   return rows[0] ? rows[0].client_id : null;
+}
+
+// Stored links (meeting_link, drive_link) get rendered as raw <a href> in the frontend with
+// no further sanitization, so a javascript: or data: URI saved here would execute in whoever
+// clicks it. Restrict to http(s) at the point of storage — the actual trust boundary.
+function isSafeHttpUrl(value) {
+  if (!value) return true;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 // Which team a client's checked service becomes a task for; business_solutions gets a
@@ -738,6 +757,7 @@ app.post('/clients/:id/appointments', requireClientPhase(resolveClientIdDirect),
   const clientId = Number(req.params.id);
   const { scheduled_at, title, agenda, created_by, meeting_type, location, meeting_link } = req.body;
   if (!scheduled_at || !title) return res.status(400).json({ error: 'scheduled_at and title required' });
+  if (!isSafeHttpUrl(meeting_link)) return res.status(400).json({ error: 'meeting_link must be a valid http(s) URL' });
   try {
     const hoursCheck = await checkBusinessHours(scheduled_at);
     if (!hoursCheck.valid) return res.status(400).json({ error: hoursCheck.error });
@@ -769,6 +789,9 @@ app.put('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment), 
     }
   }
   if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+  if (Object.prototype.hasOwnProperty.call(req.body, 'meeting_link') && !isSafeHttpUrl(req.body.meeting_link)) {
+    return res.status(400).json({ error: 'meeting_link must be a valid http(s) URL' });
+  }
   values.push(id);
   const q = `UPDATE appointments SET ${sets.join(', ')}, updated_at = now() WHERE id = $${idx} RETURNING *`;
   try {
@@ -990,6 +1013,7 @@ app.get('/calendar/available-slots', async (req, res) => {
 app.put('/clients/:id/drive-link', requirePage('phase1'), async (req, res) => {
   const id = Number(req.params.id);
   const { drive_link } = req.body;
+  if (!isSafeHttpUrl(drive_link)) return res.status(400).json({ error: 'drive_link must be a valid http(s) URL' });
   try {
     const { rows } = await db.query(
       'UPDATE clients SET drive_link=$1 WHERE id=$2 RETURNING id, drive_link',
