@@ -186,6 +186,7 @@ export function CalendarSettingsPage() {
           placeholderText={t('calendarSettings.rangePlaceholder')}
           className="appointment-date-input"
           wrapperClassName="appointment-date-wrapper"
+          minDate={new Date()}
           isClearable
         />
         <input
