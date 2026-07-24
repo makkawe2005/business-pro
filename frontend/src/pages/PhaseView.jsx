@@ -21,6 +21,16 @@ import { PipelineCard } from '../components/PipelineCard';
 
 const emptyClientForm = { contact_name: '', email: '', phone: '' };
 
+async function readErrorMessage(res, fallback) {
+  try {
+    const data = await res.json();
+    if (data && data.error) return data.error;
+  } catch {
+    // response body wasn't JSON — fall through to the generic message
+  }
+  return fallback;
+}
+
 const STATUS_FILTER_LABEL_KEYS = {
   Prospect: 'summary.prospects',
   Reschedule: 'summary.reschedule',
@@ -333,7 +343,10 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
           meeting_link: meetingLink
         })
       });
-      if (!res.ok) throw new Error('Failed to add appointment');
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, t('appointments.saveFailed')), 'error');
+        return;
+      }
       await selectClient(selectedClientId);
       showToast(t('appointments.saveSuccess'));
     } catch (err) {
@@ -348,7 +361,10 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (!res.ok) throw new Error('Failed to update appointment');
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, t(failureKey)), 'error');
+        return;
+      }
       if (selectedClientId !== null) await selectClient(selectedClientId);
       showToast(t(successKey));
     } catch (err) {
@@ -370,7 +386,10 @@ export function PhaseView({ stage, listStatusFilter, graduateToStage, graduateSt
     if (!confirmed) return;
     try {
       const res = await apiFetch(`/appointments/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to remove appointment');
+      if (!res.ok) {
+        showToast(await readErrorMessage(res, t('appointments.removeFailed')), 'error');
+        return;
+      }
       if (selectedClientId !== null) await selectClient(selectedClientId);
       showToast(t('appointments.removeSuccess'));
     } catch (err) {

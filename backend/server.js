@@ -797,19 +797,38 @@ app.delete('/appointments/:id', requireClientPhase(resolveClientIdViaAppointment
   }
 });
 
+// Business hours are entered (and displayed) as Saudi Arabia wall-clock times. Saudi Arabia
+// has no DST, so a fixed UTC+3 offset is safe. We deliberately do NOT use Date.prototype's
+// local getters (getHours/getDate/etc.) here — those depend on the Node process's own
+// timezone, which on the hosting platform defaults to UTC and does not match the browser's
+// (Riyadh) timezone. That mismatch silently shifted every working-hours check by 3 hours in
+// production, rejecting valid bookings. Shifting the instant by the fixed offset and reading
+// its UTC parts gives the same wall-clock reading everywhere, regardless of server timezone.
+const APP_TZ_OFFSET_MINUTES = 180; // Asia/Riyadh, UTC+3, no DST
+
+function toAppLocalParts(date) {
+  const shifted = new Date(date.getTime() + APP_TZ_OFFSET_MINUTES * 60000);
+  return {
+    year: shifted.getUTCFullYear(),
+    month: shifted.getUTCMonth() + 1,
+    day: shifted.getUTCDate(),
+    dayOfWeek: shifted.getUTCDay(),
+    hours: shifted.getUTCHours(),
+    minutes: shifted.getUTCMinutes()
+  };
+}
+
 // Shared by the appointment endpoints below and the available-slots endpoint further down —
 // same business_hours/calendar_closures lookup, but for a single instant instead of a list.
-// Local Date components (not UTC methods), matching the formatDateOnly convention already
-// used elsewhere, so this agrees with what the browser considers the same calendar day/time.
 async function checkBusinessHours(scheduledAt) {
   const d = new Date(scheduledAt);
   if (d.getTime() <= Date.now()) {
     return { valid: false, error: 'Cannot book an appointment in the past' };
   }
-  const dayOfWeek = d.getDay();
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const { dayOfWeek, hours: h, minutes: min, year, month, day } = toAppLocalParts(d);
+  const hh = String(h).padStart(2, '0');
+  const mm = String(min).padStart(2, '0');
+  const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const { rows: hoursRows } = await db.query(
     `SELECT * FROM business_hours WHERE user_id IS NULL AND day_of_week = $1`, [dayOfWeek]
@@ -922,10 +941,10 @@ app.get('/calendar/available-slots', async (req, res) => {
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'date (YYYY-MM-DD) required' });
   const slotMinutes = Number(duration) > 0 ? Number(duration) : 60;
   try {
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const nowParts = toAppLocalParts(new Date());
+    const todayStr = `${nowParts.year}-${String(nowParts.month).padStart(2, '0')}-${String(nowParts.day).padStart(2, '0')}`;
     if (date < todayStr) return res.json({ date, slots: [] });
-    const nowLabel = date === todayStr ? `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` : null;
+    const nowLabel = date === todayStr ? `${String(nowParts.hours).padStart(2, '0')}:${String(nowParts.minutes).padStart(2, '0')}` : null;
 
     const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
     const { rows: hoursRows } = await db.query(
@@ -944,7 +963,10 @@ app.get('/calendar/available-slots', async (req, res) => {
     const { rows: appts } = await db.query(
       `SELECT scheduled_at FROM appointments WHERE status = 'Scheduled' AND scheduled_at::date = $1::date`, [date]
     );
-    const takenTimes = new Set(appts.map((a) => new Date(a.scheduled_at).toTimeString().slice(0, 5)));
+    const takenTimes = new Set(appts.map((a) => {
+      const p = toAppLocalParts(new Date(a.scheduled_at));
+      return `${String(p.hours).padStart(2, '0')}:${String(p.minutes).padStart(2, '0')}`;
+    }));
 
     const slots = [];
     let [h, m] = hours.start_time.split(':').map(Number);
