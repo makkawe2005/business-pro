@@ -519,8 +519,7 @@ body {
   font-weight: 700;
 }
 
-.task-item-controls select,
-.task-item-controls input[type="date"] {
+.task-item-controls select {
   font-family: inherit;
   font-size: 0.86rem;
   padding: 6px 8px;
@@ -531,6 +530,29 @@ body {
   text-transform: none;
   letter-spacing: normal;
   font-weight: 400;
+}
+
+.task-item-controls .task-date-input,
+.add-subtask-row .task-date-input {
+  font-family: inherit;
+  font-size: 0.86rem;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--bp-border);
+  background: var(--bp-bg);
+  color: var(--bp-ink);
+  width: 100%;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+.task-item-controls .task-date-wrapper {
+  width: 130px;
+}
+
+.add-subtask-row .task-date-wrapper {
+  width: 100%;
 }
 
 .task-item-controls-actions {
@@ -1372,6 +1394,43 @@ textarea.deliverable:disabled { color: var(--bp-muted); }
 
 .react-datepicker__navigation-icon::before {
   border-color: #ffffff;
+}
+
+.react-datepicker__header--time {
+  background: var(--bp-navy);
+}
+
+.react-datepicker-time__header {
+  color: #ffffff;
+}
+
+.react-datepicker__time-list-item--selected {
+  background: var(--bp-gold) !important;
+  color: var(--bp-ink) !important;
+}
+
+.react-datepicker__time-list-item--selected:hover {
+  background: var(--bp-gold-dark) !important;
+  color: #ffffff !important;
+}
+
+.react-datepicker__time-list-item:hover {
+  background: var(--bp-navy-tint) !important;
+}
+
+.admin-table .time-picker-input {
+  font-family: inherit;
+  font-size: 0.86rem;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--bp-border);
+  background: var(--bp-bg);
+  color: var(--bp-ink);
+  width: 100%;
+}
+
+.admin-table .time-picker-wrapper {
+  width: 90px;
 }
 
 .modal-overlay {

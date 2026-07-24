@@ -6,6 +6,18 @@ import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 import { formatDateOnly } from '../utils/format';
 
+function parseTimeOnly(value) {
+  if (!value) return null;
+  const [hh, mm] = value.slice(0, 5).split(':').map(Number);
+  const d = new Date();
+  d.setHours(hh, mm, 0, 0);
+  return d;
+}
+
+function formatTimeOnly(date) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 const DAY_KEYS = [
   'calendarSettings.daySun',
   'calendarSettings.dayMon',
@@ -145,20 +157,34 @@ export function CalendarSettingsPage() {
                   </label>
                 </td>
                 <td>
-                  <input
-                    type="time"
-                    lang="en"
-                    value={h.start_time ? h.start_time.slice(0, 5) : ''}
-                    onChange={(e) => updateDay(h.day_of_week, 'start_time', e.target.value)}
+                  <DatePicker
+                    selected={parseTimeOnly(h.start_time)}
+                    onChange={(date) => updateDay(h.day_of_week, 'start_time', date ? formatTimeOnly(date) : null)}
+                    showTimeSelect
+                    showTimeSelectOnly
+                    timeIntervals={15}
+                    timeFormat="HH:mm"
+                    timeCaption={t('calendarSettings.startHeader')}
+                    dateFormat="HH:mm"
+                    placeholderText="HH:MM"
+                    className="time-picker-input"
+                    wrapperClassName="time-picker-wrapper"
                     disabled={!h.is_open}
                   />
                 </td>
                 <td>
-                  <input
-                    type="time"
-                    lang="en"
-                    value={h.end_time ? h.end_time.slice(0, 5) : ''}
-                    onChange={(e) => updateDay(h.day_of_week, 'end_time', e.target.value)}
+                  <DatePicker
+                    selected={parseTimeOnly(h.end_time)}
+                    onChange={(date) => updateDay(h.day_of_week, 'end_time', date ? formatTimeOnly(date) : null)}
+                    showTimeSelect
+                    showTimeSelectOnly
+                    timeIntervals={15}
+                    timeFormat="HH:mm"
+                    timeCaption={t('calendarSettings.endHeader')}
+                    dateFormat="HH:mm"
+                    placeholderText="HH:MM"
+                    className="time-picker-input"
+                    wrapperClassName="time-picker-wrapper"
                     disabled={!h.is_open}
                   />
                 </td>

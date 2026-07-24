@@ -1,11 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { apiFetch } from '../api/client';
 import { useToastStore } from '../store/toastStore';
 import { useI18n } from '../i18n/useI18n';
 import { ClientList } from '../components/ClientList';
 import { CollapsibleSection } from '../components/CollapsibleSection';
 import { initials, getTaskUrgency, formatDateOnly } from '../utils/format';
+
+// Native input[type="date"] renders its browser-chrome (calendar icon, mm/dd/yyyy) in a fixed
+// left-to-right layout even with lang="en" set, which looks visually foreign inside the app's
+// RTL Arabic layout. react-datepicker draws its own popup instead of relying on that native
+// widget, matching the fix already used for appointment/closure dates elsewhere in the app.
+function parseDateOnly(value) {
+  if (!value) return null;
+  return new Date(`${formatDateOnly(value)}T00:00:00`);
+}
 
 const STATUS_KEY = {
   unassigned: 'tasks.statusUnassigned',
@@ -262,12 +273,15 @@ export function ExecutionPage() {
               </label>
               <label>
                 <span>{t('tasks.due')}</span>
-                <input
-                  type="date"
-                  lang="en"
-                  value={formatDateOnly(task.due_date)}
-                  onChange={(e) => setDueDate(task.id, e.target.value)}
+                <DatePicker
+                  selected={parseDateOnly(task.due_date)}
+                  onChange={(date) => setDueDate(task.id, date ? formatDateOnly(date) : null)}
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="YYYY-MM-DD"
+                  className="task-date-input"
+                  wrapperClassName="task-date-wrapper"
                   disabled={task.status === 'closed'}
+                  isClearable={task.status !== 'closed' && !!task.due_date}
                 />
               </label>
               <div className="task-item-controls-actions">
@@ -372,13 +386,14 @@ export function ExecutionPage() {
                     <option value="">{t('tasks.unassignedOption')}</option>
                     {assignableUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
-                  <input
-                    type="date"
-                    lang="en"
-                    value={newSubDueDate}
-                    onChange={(e) => setNewSubDueDate(e.target.value)}
-                    title={t('tasks.due')}
-                    required={!!newSubAssignee}
+                  <DatePicker
+                    selected={parseDateOnly(newSubDueDate)}
+                    onChange={(date) => setNewSubDueDate(date ? formatDateOnly(date) : '')}
+                    dateFormat="yyyy-MM-dd"
+                    placeholderText={t('tasks.due')}
+                    className="task-date-input"
+                    wrapperClassName="task-date-wrapper"
+                    isClearable={!!newSubDueDate}
                   />
                   <button className="button primary" type="button" onClick={addSubtask}>{t('tasks.addSubtask')}</button>
                 </div>
