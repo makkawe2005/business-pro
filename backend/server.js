@@ -1150,7 +1150,7 @@ app.put('/tasks/:id/review', requireClientPhase(resolveClientIdViaTask), async (
 
 // Cross-client — every task assigned to the caller, regardless of phase4 access. Powers the
 // "My Tasks" page so any assignee can see and work their own tasks without needing phase4 access.
-app.get('/my-tasks', async (req, res) => {
+app.get('/my-tasks', requirePage('my_tasks'), async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT t.*, c.contact_name, c.phone, c.email, c.stage, comp.name AS company_name
@@ -1400,7 +1400,7 @@ app.put('/roles/:id', requirePage('system_admin'), async (req, res) => {
 });
 
 // Permissions (role -> page access matrix)
-const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'phase4', 'calendar', 'investors', 'system_admin'];
+const ALL_PAGE_KEYS = ['dashboard', 'phase1', 'phase2', 'phase3', 'phase4', 'my_tasks', 'calendar', 'investors', 'system_admin'];
 
 app.get('/permissions/me', async (req, res) => {
   try {

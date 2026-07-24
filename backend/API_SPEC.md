@@ -123,7 +123,7 @@ Tasks (Phase 4 — Execution, migration 027)
   - Body: { decision: "approve" | "send_back", comment? }. `comment` is required when `decision` is `send_back`. Sets status to `closed` (approve) or `sent_back`, and logs the corresponding `task_events` row (with `comment` for send-backs, shown back to the assignee). Same `phase4` permission check as `PUT /tasks/:id`.
 
 - GET /my-tasks
-  - No page-key gate — any authenticated user gets every task (across every client) where `assigned_to` is themself, each with `contact_name`/`phone`/`email`/`company_name`/`stage` and `events` attached, sent-back tasks sorted first. This is what makes "every assignee sees only their own part" work: assignees browse their work through this endpoint rather than the phase4 client bundle, which they may not have permission to view at all.
+  - Requires `my_tasks` page permission. Returns every task (across every client) where `assigned_to` is the caller, each with `contact_name`/`phone`/`email`/`company_name`/`stage` and `events` attached, sent-back tasks sorted first. This is what makes "every assignee sees only their own part" work: assignees browse their work through this endpoint rather than the phase4 client bundle, which they may not have permission to view at all.
 
 - GET /task-assignable-users
   - Requires `phase4` page access. Returns `{ id, name }` for every active user, no team/role restriction — the Project Manager can assign any service or sub-task to anyone.

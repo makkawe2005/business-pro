@@ -26,6 +26,7 @@ const PAGE_PRIORITY = [
   ['phase2', '/phase2'],
   ['phase3', '/phase3'],
   ['phase4', '/phase4'],
+  ['my_tasks', '/my-tasks'],
   ['investors', '/investors'],
   ['system_admin', '/system-admin']
 ];
@@ -33,9 +34,7 @@ const PAGE_PRIORITY = [
 function IndexRedirect() {
   const pageKeys = usePermissionsStore((s) => s.pageKeys);
   const match = PAGE_PRIORITY.find(([key]) => pageKeys.includes(key));
-  // /my-tasks needs no page permission, so it's the fallback for task assignees who hold
-  // no other page access at all, instead of sending them to a dead-end "no access" screen.
-  return <Navigate to={match ? match[1] : '/my-tasks'} replace />;
+  return <Navigate to={match ? match[1] : '/no-access'} replace />;
 }
 
 export default function App() {
@@ -48,7 +47,9 @@ export default function App() {
           <Route element={<AppShell />}>
             <Route index element={<IndexRedirect />} />
             <Route path="/no-access" element={<NoAccessPage />} />
-            <Route path="/my-tasks" element={<MyTasksPage />} />
+            <Route element={<RequirePage pageKey="my_tasks" />}>
+              <Route path="/my-tasks" element={<MyTasksPage />} />
+            </Route>
             <Route element={<RequirePage pageKey="dashboard" />}>
               <Route path="/dashboard" element={<DashboardPage />} />
             </Route>

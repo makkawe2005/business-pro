@@ -95,7 +95,9 @@ export function AppShell() {
           {pageKeys.includes('phase4') && (
             <NavLink to="/phase4" className={navClass} onClick={closeMenu}>{t('nav.phase4')}</NavLink>
           )}
-          <NavLink to="/my-tasks" className={navClass} onClick={closeMenu}>{t('nav.myTasks')}</NavLink>
+          {pageKeys.includes('my_tasks') && (
+            <NavLink to="/my-tasks" className={navClass} onClick={closeMenu}>{t('nav.myTasks')}</NavLink>
+          )}
           {pageKeys.includes('calendar') && (
             <NavLink to="/calendar" className={navClass} onClick={closeMenu}>{t('nav.calendar')}</NavLink>
           )}
